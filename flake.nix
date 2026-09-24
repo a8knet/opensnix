@@ -33,7 +33,7 @@
           pkgs = pkgsFor.${system};
         in
         {
-          nix-unit =
+          test =
             pkgs.runCommand "opensnix-tests"
               {
                 nativeBuildInputs = [ pkgs.nix-unit ];
