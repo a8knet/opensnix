@@ -22,9 +22,10 @@
       nixosModules.default =
         { config, lib, ... }:
         import ./modules {
-          inherit config lib;
-          self = self;
+          inherit config lib self;
         };
+
+      formatter = forAllSystems (system: pkgsFor.${system}.nixfmt-tree);
 
       checks = forAllSystems (
         system:
@@ -43,6 +44,20 @@
                   --extra-experimental-features flakes \
                   --override-input nixpkgs ${nixpkgs} \
                   --flake ${self}#lib.tests
+                touch $out
+              '';
+
+          lint =
+            pkgs.runCommand "opensnix-lint"
+              {
+                nativeBuildInputs = [
+                  pkgs.statix
+                  pkgs.deadnix
+                ];
+              }
+              ''
+                statix check ${./.}
+                deadnix --fail ${./.}
                 touch $out
               '';
         }

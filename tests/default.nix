@@ -12,7 +12,7 @@ let
     mkRules {
       inherit defaultAction;
       timestamp = ts;
-      rules = rules;
+      inherit rules;
     };
 
   expectedSimple = {
