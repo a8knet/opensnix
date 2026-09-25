@@ -12,6 +12,19 @@ in the `tests/` directory.
 nix flake check
 ```
 
+### How the tests are organized
+
+Tests are pure-data suites under `tests/` — one `*.nix` file per group of
+related cases, each entry a `{ expr, expected }` pair. `expr` is the raw opensnix
+rules; `expected` is the OpenSnitch rule body minus the invariant `base` fields.
+`tests/default.nix` auto-discovers every `*.nix` under `tests/` (except itself),
+wraps `expr` with `mkRules`, merges `expected` with `base`, and namespaces each
+test as `test-<suite>-<key>`. A test may set `defaultAction` (default `"allow"`)
+for rules that don't specify `allow`/`deny`.
+
+To add a test, drop a `{ expr, expected }` entry into a suite, or add a new
+suite file — both are picked up automatically.
+
 ## Formatting and linting
 
 Formatting uses [nixfmt](https://github.com/NixOS/nixfmt) (the official Nix

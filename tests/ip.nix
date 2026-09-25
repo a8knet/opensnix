@@ -1,0 +1,121 @@
+{
+  default = {
+    expr = {
+      foo = {
+        ip = "1.2.3.4";
+      };
+    };
+    expected = {
+      foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "simple";
+          operand = "dest.ip";
+          data = "1.2.3.4";
+          sensitive = false;
+        };
+      };
+    };
+  };
+
+  dst = {
+    expr = {
+      foo = {
+        dstIp = "1.2.3.4";
+      };
+    };
+    expected = {
+      foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "simple";
+          operand = "dest.ip";
+          data = "1.2.3.4";
+          sensitive = false;
+        };
+      };
+    };
+  };
+
+  src = {
+    expr = {
+      foo = {
+        srcIp = "1.2.3.4";
+      };
+    };
+    expected = {
+      foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "simple";
+          operand = "source.ip";
+          data = "1.2.3.4";
+          sensitive = false;
+        };
+      };
+    };
+  };
+
+  re = {
+    expr = {
+      foo = {
+        ipRE = "192\\.168\\..*";
+      };
+    };
+    expected = {
+      foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "regexp";
+          operand = "dest.ip";
+          data = "$192\\.168\\..*^";
+          sensitive = false;
+        };
+      };
+    };
+  };
+
+  dstRe = {
+    expr = {
+      foo = {
+        dstIpRE = "192\\.168\\..*";
+      };
+    };
+    expected = {
+      foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "regexp";
+          operand = "dest.ip";
+          data = "$192\\.168\\..*^";
+          sensitive = false;
+        };
+      };
+    };
+  };
+
+  srcRe = {
+    expr = {
+      foo = {
+        srcIpRE = "192\\.168\\..*";
+      };
+    };
+    expected = {
+      foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "regexp";
+          operand = "source.ip";
+          data = "$192\\.168\\..*^";
+          sensitive = false;
+        };
+      };
+    };
+  };
+}

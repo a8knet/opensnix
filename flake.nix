@@ -16,7 +16,10 @@
     in
     {
       lib = opensnixLib // {
-        tests = import ./tests { inherit opensnixLib; };
+        tests = import ./tests {
+          inherit opensnixLib;
+          inherit (nixpkgs) lib;
+        };
       };
 
       nixosModules.default =
