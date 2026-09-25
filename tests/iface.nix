@@ -13,7 +13,6 @@
           type = "simple";
           operand = "iface.out";
           data = "eth0";
-          sensitive = false;
         };
       };
     };
@@ -33,7 +32,6 @@
           type = "simple";
           operand = "iface.in";
           data = "eth0";
-          sensitive = false;
         };
       };
     };
@@ -53,7 +51,6 @@
           type = "simple";
           operand = "iface.out";
           data = "eth0";
-          sensitive = false;
         };
       };
     };

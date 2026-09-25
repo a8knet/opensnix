@@ -13,7 +13,6 @@
           type = "simple";
           operand = "protocol";
           data = "tcp";
-          sensitive = false;
         };
       };
     };

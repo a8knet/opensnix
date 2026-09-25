@@ -13,7 +13,6 @@
           type = "simple";
           operand = "dest.port";
           data = "123";
-          sensitive = false;
         };
       };
     };
@@ -33,7 +32,6 @@
           type = "simple";
           operand = "dest.port";
           data = "123";
-          sensitive = false;
         };
       };
     };
@@ -53,7 +51,6 @@
           type = "simple";
           operand = "source.port";
           data = "123";
-          sensitive = false;
         };
       };
     };

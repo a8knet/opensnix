@@ -136,7 +136,6 @@ let
               "$" + (builtins.toString frag.${key}) + "^"
             else
               builtins.toString frag.${key};
-          sensitive = false;
         };
 
   # Build a single OpenSnitch rule for the given name.

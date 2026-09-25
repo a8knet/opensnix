@@ -13,7 +13,6 @@
           type = "simple";
           operand = "dest.network";
           data = "10.0.0.0/8";
-          sensitive = false;
         };
       };
     };
@@ -33,7 +32,6 @@
           type = "simple";
           operand = "dest.network";
           data = "10.0.0.0/8";
-          sensitive = false;
         };
       };
     };
@@ -53,7 +51,6 @@
           type = "simple";
           operand = "source.network";
           data = "10.0.0.0/8";
-          sensitive = false;
         };
       };
     };
@@ -73,7 +70,6 @@
           type = "regexp";
           operand = "dest.network";
           data = "$10\\..*^";
-          sensitive = false;
         };
       };
     };
@@ -93,7 +89,6 @@
           type = "regexp";
           operand = "dest.network";
           data = "$10\\..*^";
-          sensitive = false;
         };
       };
     };
@@ -113,7 +108,6 @@
           type = "regexp";
           operand = "source.network";
           data = "$10\\..*^";
-          sensitive = false;
         };
       };
     };

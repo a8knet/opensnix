@@ -13,7 +13,6 @@
           type = "simple";
           operand = "dest.host";
           data = "example.com";
-          sensitive = false;
         };
       };
     };
@@ -33,7 +32,6 @@
           type = "regexp";
           operand = "dest.host";
           data = "$example.*[.]com^";
-          sensitive = false;
         };
       };
     };

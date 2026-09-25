@@ -13,7 +13,6 @@
           type = "simple";
           operand = "user.name";
           data = "aUser";
-          sensitive = false;
         };
       };
     };
@@ -33,7 +32,6 @@
           type = "simple";
           operand = "user.name";
           data = "aUser";
-          sensitive = false;
         };
       };
     };
@@ -53,7 +51,6 @@
           type = "simple";
           operand = "user.id";
           data = "1234";
-          sensitive = false;
         };
       };
     };

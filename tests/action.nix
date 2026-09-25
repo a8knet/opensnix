@@ -13,7 +13,6 @@
           type = "simple";
           operand = "dest.port";
           data = "123";
-          sensitive = false;
         };
       };
     };
@@ -33,7 +32,6 @@
           type = "simple";
           operand = "user.name";
           data = "aUser";
-          sensitive = false;
         };
       };
     };
@@ -54,7 +52,6 @@
           type = "simple";
           operand = "dest.host";
           data = "example.com";
-          sensitive = false;
         };
       };
     };
