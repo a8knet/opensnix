@@ -44,9 +44,12 @@ in
         value is either a single-condition fragment or an attrset with an
         `allow` or `deny` subkey wrapping the fragment.
 
-        A fragment is an attrset with exactly one of the following condition
+        A fragment is an attrset with one or more of the following condition
         keys (the value is emitted as the operator `data`, always as a
-        string):
+        string). A single key yields that condition's operator directly.
+        Several keys are combined into a single OpenSnitch list operator
+        (`type = "list"`, `operand = "list"`) whose children are all ANDed
+        together:
 
           host            -> simple  on dest.host
           hostRE          -> regexp  on dest.host        (wrapped as $...^)

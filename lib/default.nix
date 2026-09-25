@@ -108,35 +108,49 @@ let
     };
   };
 
-  # Build the operator for a single-condition rule fragment.
+  # Build a single child operator for one condition key.
+  mkChild =
+    frag: key:
+    let
+      spec = conditionMap.${key} or null;
+      supported = lib.concatStringsSep ", " (builtins.attrNames conditionMap);
+    in
+    if spec == null then
+      builtins.throw ''
+        opensnix: unknown rule condition '${key}'.
+        Supported conditions: ${supported}.''
+    else
+      spec
+      // {
+        data =
+          if spec.type == "regexp" then
+            "$" + (builtins.toString frag.${key}) + "^"
+          else
+            builtins.toString frag.${key};
+      };
+
+  # Build the operator for a rule fragment.
+  #
+  # A fragment with a single condition yields that condition's operator
+  # directly. A fragment with several conditions yields a list operator
+  # (type = "list", operand = "list") whose children are combined with AND
+  # (OpenSnitch's list type is inherently an AND of all its children).
   mkOperator =
     frag:
     let
       names = builtins.attrNames frag;
-      supported = lib.concatStringsSep ", " (builtins.attrNames conditionMap);
+      children = map (mkChild frag) names;
     in
-    if builtins.length names != 1 then
-      builtins.throw ''
-        opensnix: a rule currently supports exactly one condition, got ${toString (builtins.length names)} (${toString names}).
-        Combining multiple conditions via list operators is not implemented yet.''
+    if builtins.length names == 0 then
+      builtins.throw "opensnix: a rule must contain at least one condition, got an empty fragment."
+    else if builtins.length names == 1 then
+      builtins.head children
     else
-      let
-        key = builtins.head names;
-        spec = conditionMap.${key} or null;
-      in
-      if spec == null then
-        builtins.throw ''
-          opensnix: unknown rule condition '${key}'.
-          Supported conditions: ${supported}.''
-      else
-        spec
-        // {
-          data =
-            if spec.type == "regexp" then
-              "$" + (builtins.toString frag.${key}) + "^"
-            else
-              builtins.toString frag.${key};
-        };
+      {
+        type = "list";
+        operand = "list";
+        list = children;
+      };
 
   # Build a single OpenSnitch rule for the given name.
   # `frag` is the user-provided single-condition fragment; the internally
