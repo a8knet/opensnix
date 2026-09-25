@@ -3,7 +3,7 @@
     expr = {
       foo = {
         host = "example.com";
-        port = "443";
+        port = 443;
       };
     };
     expected = {
@@ -34,7 +34,7 @@
     expr = {
       foo = {
         host = "example.com";
-        port = "443";
+        port = 443;
         proto = "tcp";
       };
     };
@@ -71,7 +71,7 @@
     expr = {
       foo = {
         hostRE = "example.*[.]com";
-        port = "443";
+        port = 443;
       };
     };
     expected = {

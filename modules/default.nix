@@ -2,6 +2,7 @@
   config,
   lib,
   self,
+  ...
 }:
 let
   opensnixLib = self.lib;
@@ -37,38 +38,14 @@ in
     };
 
     rules = lib.mkOption {
-      type = lib.types.attrsOf lib.types.attrs;
+      type = lib.types.attrsOf opensnixLib.ruleType;
       default = { };
       description = ''
         OpenSnitch rules. Each attribute name is the rule identifier; its
-        value is either a single-condition fragment or an attrset with an
-        `allow` or `deny` subkey wrapping the fragment.
-
-        A fragment is an attrset with one or more of the following condition
-        keys (the value is emitted as the operator `data`, always as a
-        string). A single key yields that condition's operator directly.
-        Several keys are combined into a single OpenSnitch list operator
-        (`type = "list"`, `operand = "list"`) whose children are all ANDed
-        together:
-
-          host            -> simple  on dest.host
-          hostRE          -> regexp  on dest.host        (wrapped as $...^)
-          port / dstPort  -> simple  on dest.port
-          srcPort         -> simple  on source.port
-          user / userName -> simple  on user.name
-          userId          -> simple  on user.id
-          ip / dstIp      -> simple  on dest.ip
-          srcIp           -> simple  on source.ip
-          network / dstNetwork -> simple on dest.network (CIDR)
-          srcNetwork      -> simple  on source.network
-          ipRE / dstIpRE  -> regexp  on dest.ip          (wrapped as $...^)
-          srcIpRE         -> regexp  on source.ip        (wrapped as $...^)
-          networkRE / dstNetworkRE -> regexp on dest.network (wrapped $...^)
-          srcNetworkRE    -> regexp  on source.network   (wrapped as $...^)
-          proto           -> simple  on protocol
-          iface           -> simple  on iface.out
-          ifaceIn         -> simple  on iface.in
-          ifaceOut        -> simple  on iface.out
+        value is either a bare fragment, an attrset with an `allow` subkey,
+        or an attrset with a `deny` subkey wrapping the fragment. A fragment
+        carries one or more condition keys (see `opensnixLib.ruleType` for the
+        full typed schema).
       '';
     };
   };

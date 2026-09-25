@@ -15,14 +15,17 @@ let
     port = {
       type = "simple";
       operand = "dest.port";
+      valueType = lib.types.int;
     };
     dstPort = {
       type = "simple";
       operand = "dest.port";
+      valueType = lib.types.int;
     };
     srcPort = {
       type = "simple";
       operand = "source.port";
+      valueType = lib.types.int;
     };
 
     userName = {
@@ -36,6 +39,7 @@ let
     userId = {
       type = "simple";
       operand = "user.id";
+      valueType = lib.types.int;
     };
 
     ip = {
@@ -108,26 +112,54 @@ let
     };
   };
 
+  # Typed option attrs for a single rule fragment, derived from `conditionMap`
+  # so the set of condition keys and their Nix value types live in exactly one
+  # place. A spec without `valueType` defaults to a string; numeric conditions
+  # declare `valueType = lib.types.int`.
+  conditionsOptions = lib.mapAttrs (
+    _: spec:
+    lib.mkOption {
+      type = lib.types.nullOr (spec.valueType or lib.types.str);
+      default = null;
+      description = "OpenSnitch '${spec.operand}' (${spec.type}) condition.";
+    }
+  ) conditionMap;
+
+  conditionsType = lib.types.submodule { options = conditionsOptions; };
+
+  # Typed schema for one rule entry: either a bare fragment, or wrapped in
+  # `allow` / `deny` (each a fragment), with the default action applied when
+  # neither wrapper is present.
+  ruleType = lib.types.submodule {
+    options = {
+      allow = lib.mkOption {
+        type = lib.types.nullOr conditionsType;
+        default = null;
+        description = "Wrap a fragment with the 'allow' action.";
+      };
+      deny = lib.mkOption {
+        type = lib.types.nullOr conditionsType;
+        default = null;
+        description = "Wrap a fragment with the 'deny' action.";
+      };
+    } // conditionsOptions;
+  };
+
   # Build a single child operator for one condition key.
   mkChild =
     frag: key:
     let
-      spec = conditionMap.${key} or null;
-      supported = lib.concatStringsSep ", " (builtins.attrNames conditionMap);
+      spec = conditionMap.${key};
+      value = frag.${key};
     in
-    if spec == null then
-      builtins.throw ''
-        opensnix: unknown rule condition '${key}'.
-        Supported conditions: ${supported}.''
-    else
-      spec
-      // {
-        data =
-          if spec.type == "regexp" then
-            "$" + (builtins.toString frag.${key}) + "^"
-          else
-            builtins.toString frag.${key};
-      };
+    {
+      inherit (spec) type operand;
+      data =
+        if spec.type == "regexp" then
+          "$" + (builtins.toString value) + "^"
+        else
+          builtins.toString value;
+    };
 
   # Build the operator for a rule fragment.
   #
@@ -167,7 +199,7 @@ let
   };
 in
 {
-  inherit mkRule mkOperator;
+  inherit mkRule mkOperator mkChild ruleType conditionsType;
 
   # Turn the opensnix.rules attrset into an attrset of full OpenSnitch rules,
   # shaped exactly like `services.opensnitch.rules` (attrsOf freeform).
@@ -182,13 +214,39 @@ in
       rules,
       timestamp,
     }:
+    let
+      # Resolve the actual condition fragment and action for an entry, handling
+      # the `allow`/`deny` wrappers and the typed schema's null defaults.
+      resolve =
+        entry:
+        let
+          wrapped =
+            if entry ? allow && entry.allow != null then
+              {
+                fragment = entry.allow;
+                action = "allow";
+              }
+            else if entry ? deny && entry.deny != null then
+              {
+                fragment = entry.deny;
+                action = "deny";
+              }
+            else
+              {
+                fragment = lib.filterAttrs (k: _: k != "allow" && k != "deny") entry;
+                action = defaultAction;
+              };
+        in
+        wrapped
+        // {
+          fragment = lib.filterAttrs (_: v: v != null) wrapped.fragment;
+        };
+    in
     lib.mapAttrs (
       name: entry:
-      if entry ? allow then
-        mkRule name "allow" timestamp entry.allow
-      else if entry ? deny then
-        mkRule name "deny" timestamp entry.deny
-      else
-        mkRule name defaultAction timestamp entry
+      let
+        r = resolve entry;
+      in
+      mkRule name r.action timestamp r.fragment
     ) rules;
 }
