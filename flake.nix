@@ -63,6 +63,18 @@
                 deadnix --fail ${./.}
                 touch $out
               '';
+
+          format =
+            pkgs.runCommand "opensnix-format"
+              {
+                nativeBuildInputs = [ pkgs.nixfmt-tree ];
+              }
+              ''
+                cp -r ${./.} src
+                chmod -R u+w src
+                treefmt --fail-on-change --no-cache --tree-root src src
+                touch $out
+              '';
         }
       );
     };
