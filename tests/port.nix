@@ -55,4 +55,31 @@
       };
     };
   };
+
+  badPortType = {
+    expr = {
+      foo = {
+        port = "443";
+      };
+    };
+    expectedError.msg = "not of type.*signed integer";
+  };
+
+  badDstPortType = {
+    expr = {
+      foo = {
+        dstPort = "x";
+      };
+    };
+    expectedError.msg = "not of type.*signed integer";
+  };
+
+  badSrcPortType = {
+    expr = {
+      foo = {
+        srcPort = "x";
+      };
+    };
+    expectedError.msg = "not of type.*signed integer";
+  };
 }

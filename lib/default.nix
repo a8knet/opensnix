@@ -142,7 +142,8 @@ let
         default = null;
         description = "Wrap a fragment with the 'deny' action.";
       };
-    } // conditionsOptions;
+    }
+    // conditionsOptions;
   };
 
   # Build a single child operator for one condition key.
@@ -155,10 +156,7 @@ let
     {
       inherit (spec) type operand;
       data =
-        if spec.type == "regexp" then
-          "$" + (builtins.toString value) + "^"
-        else
-          builtins.toString value;
+        if spec.type == "regexp" then "$" + (builtins.toString value) + "^" else builtins.toString value;
     };
 
   # Build the operator for a rule fragment.
@@ -199,7 +197,13 @@ let
   };
 in
 {
-  inherit mkRule mkOperator mkChild ruleType conditionsType;
+  inherit
+    mkRule
+    mkOperator
+    mkChild
+    ruleType
+    conditionsType
+    ;
 
   # Turn the opensnix.rules attrset into an attrset of full OpenSnitch rules,
   # shaped exactly like `services.opensnitch.rules` (attrsOf freeform).
@@ -220,13 +224,17 @@ in
       resolve =
         entry:
         let
+          hasAllow = entry ? allow && entry.allow != null;
+          hasDeny = entry ? deny && entry.deny != null;
           wrapped =
-            if entry ? allow && entry.allow != null then
+            if hasAllow && hasDeny then
+              builtins.throw "opensnix: a rule cannot specify both 'allow' and 'deny'."
+            else if hasAllow then
               {
                 fragment = entry.allow;
                 action = "allow";
               }
-            else if entry ? deny && entry.deny != null then
+            else if hasDeny then
               {
                 fragment = entry.deny;
                 action = "deny";

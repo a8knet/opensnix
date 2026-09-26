@@ -36,4 +36,13 @@
       };
     };
   };
+
+  badType = {
+    expr = {
+      foo = {
+        host = 123;
+      };
+    };
+    expectedError.msg = "not of type.*string";
+  };
 }

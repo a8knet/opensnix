@@ -55,4 +55,13 @@
       };
     };
   };
+
+  badUserIdType = {
+    expr = {
+      foo = {
+        userId = "abc";
+      };
+    };
+    expectedError.msg = "not of type.*signed integer";
+  };
 }

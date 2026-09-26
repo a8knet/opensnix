@@ -51,11 +51,18 @@ let
           )
         ];
       };
+      rules = eval.config.services.opensnitch.rules;
     in
-    {
-      expr = eval.config.services.opensnitch.rules;
-      expected = lib.mapAttrs (_: r: base // r) t.expected;
-    };
+    if t ? expectedError then
+      {
+        inherit (t) expectedError;
+        expr = rules;
+      }
+    else
+      {
+        expr = rules;
+        expected = lib.mapAttrs (_: r: base // r) t.expected;
+      };
 
   # Import a suite file, namespace each test as test-<basename>-<key>, transform it.
   load =

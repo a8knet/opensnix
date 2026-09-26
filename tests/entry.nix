@@ -56,4 +56,44 @@
       };
     };
   };
+
+  badEnum = {
+    expr = {
+      foo = {
+        host = "example.com";
+      };
+    };
+    defaultAction = "reject";
+    expectedError.msg = "defaultAction";
+  };
+
+  allowAndDeny = {
+    expr = {
+      foo = {
+        allow = {
+          port = 123;
+        };
+        deny = {
+          user = "x";
+        };
+      };
+    };
+    expectedError.msg = "cannot specify both";
+  };
+
+  unknownKey = {
+    expr = {
+      foo = {
+        bogus = "x";
+      };
+    };
+    expectedError.msg = "bogus";
+  };
+
+  emptyFragment = {
+    expr = {
+      foo = { };
+    };
+    expectedError.msg = "must contain at least one condition";
+  };
 }
