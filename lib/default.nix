@@ -257,24 +257,25 @@ in
       resolve =
         entry:
         let
-          hasAllow = entry ? allow && entry.allow != null;
-          hasDeny = entry ? deny && entry.deny != null;
           wrapped =
-            if hasAllow && hasDeny then
+            if entry.allow != null && entry.deny != null then
               builtins.throw "opensnix: a rule cannot specify both 'allow' and 'deny'."
-            else if hasAllow then
+            else if entry.allow != null then
               {
                 fragment = entry.allow;
                 action = "allow";
               }
-            else if hasDeny then
+            else if entry.deny != null then
               {
                 fragment = entry.deny;
                 action = "deny";
               }
             else
               {
-                fragment = lib.filterAttrs (k: _: k != "allow" && k != "deny") entry;
+                fragment = removeAttrs entry [
+                  "allow"
+                  "deny"
+                ];
                 action = defaultAction;
               };
         in
