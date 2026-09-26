@@ -125,7 +125,39 @@ let
     }
   ) conditionMap;
 
+  # Map array-expansion fields to their condition key and rule-name suffix.
+  arrayExpansionMap = {
+    users = {
+      conditionKey = "user";
+      suffix = "user";
+    };
+    userNames = {
+      conditionKey = "userName";
+      suffix = "user";
+    };
+    userIds = {
+      conditionKey = "userId";
+      suffix = "userId";
+    };
+  };
+
+  arrayOptions = lib.mapAttrs (
+    _fieldName: spec:
+    let
+      valueType = conditionMap.${spec.conditionKey}.valueType or lib.types.str;
+    in
+    lib.mkOption {
+      type = lib.types.nullOr (lib.types.listOf valueType);
+      default = null;
+      description = "Expand one rule per element into separate OpenSnitch rules.";
+    }
+  ) arrayExpansionMap;
+
   conditionsType = lib.types.submodule { options = conditionsOptions; };
+
+  conditionsTypeWithArrays = lib.types.submodule {
+    options = conditionsOptions // arrayOptions;
+  };
 
   # Typed schema for one rule entry: either a bare fragment, or wrapped in
   # `allow` / `deny` (each a fragment), with the default action applied when
@@ -133,17 +165,18 @@ let
   ruleType = lib.types.submodule {
     options = {
       allow = lib.mkOption {
-        type = lib.types.nullOr conditionsType;
+        type = lib.types.nullOr conditionsTypeWithArrays;
         default = null;
         description = "Wrap a fragment with the 'allow' action.";
       };
       deny = lib.mkOption {
-        type = lib.types.nullOr conditionsType;
+        type = lib.types.nullOr conditionsTypeWithArrays;
         default = null;
         description = "Wrap a fragment with the 'deny' action.";
       };
     }
-    // conditionsOptions;
+    // conditionsOptions
+    // arrayOptions;
   };
 
   # Build a single child operator for one condition key.
@@ -249,12 +282,56 @@ in
         // {
           fragment = lib.filterAttrs (_: v: v != null) wrapped.fragment;
         };
+
+      expandArrays =
+        name: r:
+        let
+          inherit (r) fragment;
+          arrayFields = lib.filterAttrs (k: _: (fragment.${k} or null) != null) arrayExpansionMap;
+          arrayFieldNames = builtins.attrNames arrayFields;
+        in
+        if builtins.length arrayFieldNames > 1 then
+          builtins.throw "opensnix: rule '${name}' specifies multiple array fields (${builtins.concatStringsSep ", " arrayFieldNames}); only one is allowed."
+        else if arrayFieldNames == [ ] then
+          [
+            {
+              inherit name fragment;
+              inherit (r) action;
+            }
+          ]
+        else
+          let
+            fieldName = builtins.head arrayFieldNames;
+            spec = arrayFields.${fieldName};
+            values = fragment.${fieldName};
+          in
+          if values == [ ] then
+            builtins.throw "opensnix: rule '${name}' has empty array for '${fieldName}'."
+          else
+            map (value: {
+              name = "${name}-${spec.suffix}-${builtins.toString value}";
+              fragment = (removeAttrs fragment [ fieldName ]) // {
+                ${spec.conditionKey} = value;
+              };
+              inherit (r) action;
+            }) values;
+
+      expandedEntries = lib.concatLists (
+        lib.mapAttrsToList (
+          name: entry:
+          let
+            r = resolve entry;
+          in
+          expandArrays name r
+        ) rules
+      );
+
+      dups = lib.filterAttrs (_: vs: builtins.length vs > 1) (lib.groupBy (e: e.name) expandedEntries);
     in
-    lib.mapAttrs (
-      name: entry:
-      let
-        r = resolve entry;
-      in
-      mkRule name r.action timestamp r.fragment
-    ) rules;
+    if dups != { } then
+      throw "opensnix: duplicate rule name '${builtins.head (lib.attrNames dups)}' generated; check for duplicate values in array fields or conflicting rule names."
+    else
+      builtins.listToAttrs (
+        map (e: lib.nameValuePair e.name (mkRule e.name e.action timestamp e.fragment)) expandedEntries
+      );
 }
