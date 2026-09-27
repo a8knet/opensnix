@@ -112,4 +112,31 @@
       };
     };
   };
+
+  reWithCaret = {
+    expr = {
+      foo = {
+        ipRE = "^192\\.168\\..*";
+      };
+    };
+    expectedError.msg = "string without leading";
+  };
+
+  dstReWithDollar = {
+    expr = {
+      foo = {
+        dstIpRE = "192\\.168\\..*$";
+      };
+    };
+    expectedError.msg = "trailing";
+  };
+
+  srcReWithBoth = {
+    expr = {
+      foo = {
+        srcIpRE = "^192\\.168\\..*$";
+      };
+    };
+    expectedError.msg = "string without leading";
+  };
 }

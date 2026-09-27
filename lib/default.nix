@@ -1,5 +1,14 @@
 { lib }:
 let
+  # String type that rejects leading '^' or trailing '$' anchors, since the
+  # wrapper automatically adds them for regexp conditions.
+  regexpStrType =
+    lib.types.addCheck lib.types.str (v: !(lib.hasPrefix "^" v || lib.hasSuffix "$" v))
+    // {
+      description = "string without leading '^' or trailing '$'";
+      descriptionClass = "noun";
+    };
+
   domainsSpec = {
     type = "lists";
     operand = "lists.domains";
@@ -11,7 +20,7 @@ let
   domainsRegexpSpec = {
     type = "lists";
     operand = "lists.domains_regexp";
-    valueType = lib.types.listOf lib.types.str;
+    valueType = lib.types.listOf regexpStrType;
     fileName = "domains_regexp.list";
     format = values: lib.concatStringsSep "\n" (map (d: "^${d}$") values);
   };
@@ -153,11 +162,12 @@ let
   # Typed option attrs for a single rule fragment, derived from `conditionMap`
   # so the set of condition keys and their Nix value types live in exactly one
   # place. A spec without `valueType` defaults to a string; numeric conditions
-  # declare `valueType = lib.types.int`.
+  # declare `valueType = lib.types.int`. Regexp conditions use `regexpStrType`
+  # to reject user-supplied anchors.
   conditionsOptions = lib.mapAttrs (
     _: spec:
     let
-      baseType = spec.valueType or lib.types.str;
+      baseType = if spec.type == "regexp" then regexpStrType else spec.valueType or lib.types.str;
       optionType = lib.types.nullOr baseType;
     in
     lib.mkOption {

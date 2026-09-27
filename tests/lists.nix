@@ -149,6 +149,24 @@
     expectedError.msg = "empty list for 'domainsRE'";
   };
 
+  domainsRE-withCaret = {
+    expr = {
+      foo = {
+        domainsRE = [ "^example.com" ];
+      };
+    };
+    expectedError.msg = "string without leading";
+  };
+
+  hostsRE-withDollar = {
+    expr = {
+      foo = {
+        hostsRE = [ "example.com$" ];
+      };
+    };
+    expectedError.msg = "trailing";
+  };
+
   ips-content = {
     expr = {
       foo = {

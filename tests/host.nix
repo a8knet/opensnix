@@ -45,4 +45,22 @@
     };
     expectedError.msg = "not of type.*string";
   };
+
+  reWithCaret = {
+    expr = {
+      foo = {
+        hostRE = "^example.*[.]com";
+      };
+    };
+    expectedError.msg = "string without leading";
+  };
+
+  reWithDollar = {
+    expr = {
+      foo = {
+        hostRE = "example.*[.]com$";
+      };
+    };
+    expectedError.msg = "trailing";
+  };
 }

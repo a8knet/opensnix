@@ -112,4 +112,31 @@
       };
     };
   };
+
+  reWithCaret = {
+    expr = {
+      foo = {
+        networkRE = "^10\\..*";
+      };
+    };
+    expectedError.msg = "string without leading";
+  };
+
+  dstReWithDollar = {
+    expr = {
+      foo = {
+        dstNetworkRE = "10\\..*$";
+      };
+    };
+    expectedError.msg = "trailing";
+  };
+
+  srcReWithBoth = {
+    expr = {
+      foo = {
+        srcNetworkRE = "^10\\..*$";
+      };
+    };
+    expectedError.msg = "string without leading";
+  };
 }
