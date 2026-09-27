@@ -8,7 +8,7 @@
   outputs =
     { self, nixpkgs }:
     let
-      opensnixLib = import ./lib { inherit (nixpkgs) lib; };
+      opensnixLib = import ./lib/rules.nix { inherit (nixpkgs) lib; };
 
       systems = [ "x86_64-linux" ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
