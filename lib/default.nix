@@ -123,6 +123,23 @@ let
       operand = "protocol";
     };
 
+    processPath = {
+      type = "simple";
+      operand = "process.path";
+    };
+    processCommand = {
+      type = "simple";
+      operand = "process.command";
+    };
+    processPathRE = {
+      type = "regexp";
+      operand = "process.path";
+    };
+    processCommandRE = {
+      type = "regexp";
+      operand = "process.command";
+    };
+
     iface = {
       type = "simple";
       operand = "iface.out";
