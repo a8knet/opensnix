@@ -2,6 +2,7 @@
   config,
   lib,
   self,
+  pkgs,
   ...
 }:
 let
@@ -10,6 +11,7 @@ let
 
   rendered = opensnixLib.mkRules {
     inherit (cfg) defaultAction rules timestamp;
+    inherit (pkgs) writeTextDir;
   };
 in
 {

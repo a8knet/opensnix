@@ -23,9 +23,19 @@
       };
 
       nixosModules.default =
-        { config, lib, ... }:
+        {
+          config,
+          lib,
+          pkgs,
+          ...
+        }:
         import ./modules {
-          inherit config lib self;
+          inherit
+            config
+            lib
+            self
+            pkgs
+            ;
         };
 
       formatter = forAllSystems (system: pkgsFor.${system}.nixfmt-tree);

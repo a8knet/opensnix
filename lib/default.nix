@@ -1,6 +1,22 @@
 { lib }:
 let
-  # Map a simple-rule condition field to its OpenSnitch operator spec.
+  domainsSpec = {
+    type = "lists";
+    operand = "lists.domains";
+    valueType = lib.types.listOf lib.types.str;
+    fileName = "domains.list";
+    format = values: lib.concatStringsSep "\n" (map (d: "0.0.0.0 ${d}") values);
+  };
+
+  domainsRegexpSpec = {
+    type = "lists";
+    operand = "lists.domains_regexp";
+    valueType = lib.types.listOf lib.types.str;
+    fileName = "domains_regexp.list";
+    format = values: lib.concatStringsSep "\n" (map (d: "^${d}$") values);
+  };
+
+  # Map a condition field to its OpenSnitch operator spec.
   # The `data` is filled in by mkOperator from the user-supplied value.
   conditionMap = {
     host = {
@@ -110,6 +126,28 @@ let
       type = "simple";
       operand = "iface.out";
     };
+
+    ips = {
+      type = "lists";
+      operand = "lists.ips";
+      valueType = lib.types.listOf lib.types.str;
+      fileName = "ips.list";
+      format = values: lib.concatStringsSep "\n" values;
+    };
+
+    nets = {
+      type = "lists";
+      operand = "lists.nets";
+      valueType = lib.types.listOf lib.types.str;
+      fileName = "nets.list";
+      format = values: lib.concatStringsSep "\n" values;
+    };
+
+    domains = domainsSpec;
+    hosts = domainsSpec;
+
+    domainsRE = domainsRegexpSpec;
+    hostsRE = domainsRegexpSpec;
   };
 
   # Typed option attrs for a single rule fragment, derived from `conditionMap`
@@ -118,8 +156,12 @@ let
   # declare `valueType = lib.types.int`.
   conditionsOptions = lib.mapAttrs (
     _: spec:
+    let
+      baseType = spec.valueType or lib.types.str;
+      optionType = lib.types.nullOr baseType;
+    in
     lib.mkOption {
-      type = lib.types.nullOr (spec.valueType or lib.types.str);
+      type = optionType;
       default = null;
       description = "OpenSnitch '${spec.operand}' (${spec.type}) condition.";
     }
@@ -181,16 +223,26 @@ let
 
   # Build a single child operator for one condition key.
   mkChild =
-    frag: key:
+    writeTextDir: frag: key:
     let
       spec = conditionMap.${key};
       value = frag.${key};
     in
-    {
-      inherit (spec) type operand;
-      data =
-        if spec.type == "regexp" then "$" + (builtins.toString value) + "^" else builtins.toString value;
-    };
+    if spec.type == "lists" then
+      let
+        content = spec.format value;
+        dir = writeTextDir spec.fileName content;
+      in
+      {
+        inherit (spec) type operand;
+        data = dir;
+      }
+    else
+      {
+        inherit (spec) type operand;
+        data =
+          if spec.type == "regexp" then "$" + (builtins.toString value) + "^" else builtins.toString value;
+      };
 
   # Build the operator for a rule fragment.
   #
@@ -199,10 +251,10 @@ let
   # (type = "list", operand = "list") whose children are combined with AND
   # (OpenSnitch's list type is inherently an AND of all its children).
   mkOperator =
-    frag:
+    writeTextDir: frag:
     let
       names = builtins.attrNames frag;
-      children = map (mkChild frag) names;
+      children = map (mkChild writeTextDir frag) names;
     in
     if builtins.length names == 0 then
       builtins.throw "opensnix: a rule must contain at least one condition, got an empty fragment."
@@ -219,14 +271,14 @@ let
   # `frag` is the user-provided single-condition fragment; the internally
   # managed fields are always set here and override anything the user might
   # have tried to supply (there is intentionally no generic pass-through).
-  mkRule = name: action: timestamp: frag: {
+  mkRule = writeTextDir: name: action: timestamp: frag: {
     inherit action;
     created = timestamp;
     updated = timestamp;
     name = "opensnix-${name}";
     enabled = true;
     duration = "always";
-    operator = mkOperator frag;
+    operator = mkOperator writeTextDir frag;
   };
 in
 {
@@ -250,6 +302,7 @@ in
       defaultAction,
       rules,
       timestamp,
+      writeTextDir,
     }:
     let
       # Resolve the actual condition fragment and action for an entry, handling
@@ -290,8 +343,12 @@ in
           inherit (r) fragment;
           arrayFields = lib.filterAttrs (k: _: (fragment.${k} or null) != null) arrayExpansionMap;
           arrayFieldNames = builtins.attrNames arrayFields;
+          listFields = lib.filterAttrs (k: v: v == [ ] && (conditionMap.${k}.type or "") == "lists") fragment;
+          listFieldNames = builtins.attrNames listFields;
         in
-        if builtins.length arrayFieldNames > 1 then
+        if builtins.length listFieldNames > 0 then
+          builtins.throw "opensnix: rule '${name}' has empty list for '${builtins.head listFieldNames}'."
+        else if builtins.length arrayFieldNames > 1 then
           builtins.throw "opensnix: rule '${name}' specifies multiple array fields (${builtins.concatStringsSep ", " arrayFieldNames}); only one is allowed."
         else if arrayFieldNames == [ ] then
           [
@@ -333,6 +390,8 @@ in
       throw "opensnix: duplicate rule name '${builtins.head (lib.attrNames dups)}' generated; check for duplicate values in array fields or conflicting rule names."
     else
       builtins.listToAttrs (
-        map (e: lib.nameValuePair e.name (mkRule e.name e.action timestamp e.fragment)) expandedEntries
+        map (
+          e: lib.nameValuePair e.name (mkRule writeTextDir e.name e.action timestamp e.fragment)
+        ) expandedEntries
       );
 }
