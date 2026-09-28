@@ -1,17 +1,16 @@
 {
   config,
   lib,
-  self,
   pkgs,
+  self,
   ...
 }:
 let
-  opensnixLib = self.lib;
+  opensnixLib = self.lib.default { inherit lib pkgs; };
   cfg = config.opensnix;
 
   rendered = opensnixLib.mkRules {
     inherit (cfg) defaultAction rules timestamp;
-    inherit (pkgs) writeTextDir;
   };
 in
 {

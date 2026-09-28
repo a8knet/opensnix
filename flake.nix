@@ -8,17 +8,16 @@
   outputs =
     { self, nixpkgs }:
     let
-      opensnixLib = import ./lib/rules.nix { inherit (nixpkgs) lib; };
-
       systems = [ "x86_64-linux" ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
       pkgsFor = nixpkgs.legacyPackages;
     in
     {
-      lib = opensnixLib // {
+      lib = {
+        default = import ./lib;
         tests = import ./tests {
-          inherit opensnixLib;
           inherit (nixpkgs) lib;
+          rules = import ./lib/rules.nix;
         };
       };
 
@@ -33,8 +32,8 @@
           inherit
             config
             lib
-            self
             pkgs
+            self
             ;
         };
 

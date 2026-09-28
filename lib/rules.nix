@@ -1,5 +1,7 @@
-{ lib }:
+{ lib, utils }:
 let
+  inherit (utils) writeTextDir;
+
   # String type that rejects leading '^' or trailing '$' anchors, since the
   # wrapper automatically adds them for regexp conditions.
   regexpStrType =
@@ -222,8 +224,6 @@ let
     }
   ) arrayExpansionMap;
 
-  conditionsType = lib.types.submodule { options = conditionsOptions; };
-
   conditionsTypeWithArrays = lib.types.submodule {
     options = conditionsOptions // arrayOptions;
   };
@@ -250,7 +250,7 @@ let
 
   # Build a single child operator for one condition key.
   mkChild =
-    writeTextDir: frag: key:
+    frag: key:
     let
       spec = conditionMap.${key};
       value = frag.${key};
@@ -278,10 +278,10 @@ let
   # (type = "list", operand = "list") whose children are combined with AND
   # (OpenSnitch's list type is inherently an AND of all its children).
   mkOperator =
-    writeTextDir: frag:
+    frag:
     let
       names = builtins.attrNames frag;
-      children = map (mkChild writeTextDir frag) names;
+      children = map (mkChild frag) names;
     in
     if builtins.length names == 0 then
       builtins.throw "opensnix: a rule must contain at least one condition, got an empty fragment."
@@ -298,24 +298,15 @@ let
   # `frag` is the user-provided single-condition fragment; the internally
   # managed fields are always set here and override anything the user might
   # have tried to supply (there is intentionally no generic pass-through).
-  mkRule = writeTextDir: name: action: timestamp: frag: {
+  mkRule = name: action: timestamp: frag: {
     inherit action;
     created = timestamp;
     updated = timestamp;
     name = "opensnix-${name}";
     enabled = true;
     duration = "always";
-    operator = mkOperator writeTextDir frag;
+    operator = mkOperator frag;
   };
-in
-{
-  inherit
-    mkRule
-    mkOperator
-    mkChild
-    ruleType
-    conditionsType
-    ;
 
   # Turn the opensnix.rules attrset into an attrset of full OpenSnitch rules,
   # shaped exactly like `services.opensnitch.rules` (attrsOf freeform).
@@ -329,7 +320,6 @@ in
       defaultAction,
       rules,
       timestamp,
-      writeTextDir,
     }:
     let
       # Resolve the actual condition fragment and action for an entry, handling
@@ -417,8 +407,12 @@ in
       throw "opensnix: duplicate rule name '${builtins.head (lib.attrNames dups)}' generated; check for duplicate values in array fields or conflicting rule names."
     else
       builtins.listToAttrs (
-        map (
-          e: lib.nameValuePair e.name (mkRule writeTextDir e.name e.action timestamp e.fragment)
-        ) expandedEntries
+        map (e: lib.nameValuePair e.name (mkRule e.name e.action timestamp e.fragment)) expandedEntries
       );
+in
+{
+  inherit
+    mkRules
+    ruleType
+    ;
 }

@@ -1,11 +1,22 @@
 {
-  opensnixLib,
+  rules,
   lib,
 }:
 let
   # Mock writeTextDir that returns the file name and content instead of a
   # derivation, enabling pure unit testing of generated file content.
   mockWriteTextDir = name: content: { inherit name content; };
+
+  # Mock utils for testing
+  mockUtils = {
+    writeTextDir = mockWriteTextDir;
+  };
+
+  # Import rules with mocked utils
+  opensnixLib = rules {
+    inherit lib;
+    utils = mockUtils;
+  };
 
   # Shared timestamp and the invariant fields every emitted rule carries.
   ts = "2026-09-22T00:00:00.000000000+00:00";
@@ -44,11 +55,10 @@ let
               };
               config = {
                 _module.args.self = {
-                  lib = opensnixLib;
+                  lib = {
+                    default = _: opensnixLib;
+                  };
                   lastModifiedDate = ts;
-                };
-                _module.args.pkgs = {
-                  writeTextDir = mockWriteTextDir;
                 };
                 opensnix = {
                   enable = lib.mkForce true;
