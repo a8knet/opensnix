@@ -3,22 +3,18 @@
   lib,
 }:
 let
-  # Mock writeTextDir that returns the file name and content instead of a
-  # derivation, enabling pure unit testing of generated file content.
   mockWriteTextDir = name: content: { inherit name content; };
 
-  # Mock utils for testing
   mockUtils = {
     writeTextDir = mockWriteTextDir;
+    realpath = x: x;
   };
 
-  # Import rules with mocked utils
   opensnixLib = rules {
     inherit lib;
     utils = mockUtils;
   };
 
-  # Shared timestamp and the invariant fields every emitted rule carries.
   ts = "2026-09-22T00:00:00.000000000+00:00";
   base = {
     created = ts;
@@ -27,19 +23,12 @@ let
     duration = "always";
   };
 
-  # Discover suite files automatically: every .nix file directly under this
-  # directory (except default.nix itself) is a suite of pure-data tests.
   suiteNames = lib.attrNames (
     lib.filterAttrs (n: t: t == "regular" && n != "default.nix" && lib.hasSuffix ".nix" n) (
       builtins.readDir ./.
     )
   );
 
-  # Turn a raw test (opensnix rules + literal opensnitch rule bodies) into a
-  # real nix-unit test by running it through the actual NixOS module via
-  # evalModules. The stub services.opensnitch.rules option mirrors what the
-  # real OpenSnitch module provides; the rendered rules are plain data and
-  # safe to compare outside the module evaluation.
   transform =
     t:
     let
@@ -84,7 +73,6 @@ let
         expected = lib.mapAttrs (_: r: base // r) t.expected;
       };
 
-  # Import a suite file, namespace each test as test-<basename>-<key>, transform it.
   load =
     name:
     let

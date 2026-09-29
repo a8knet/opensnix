@@ -1,6 +1,8 @@
 { lib, utils }:
 let
-  inherit (utils) writeTextDir;
+  inherit (utils) writeTextDir realpath;
+
+  toWrapped = path: "${dirOf path}/.${baseNameOf path}-wrapped";
 
   # String type that rejects leading '^' or trailing '$' anchors, since the
   # wrapper automatically adds them for regexp conditions.
@@ -26,6 +28,42 @@ let
     fileName = "domains_regexp.list";
     format = values: lib.concatStringsSep "\n" (map (d: "^${d}$") values);
   };
+
+  # Package specification: either a bare package or an attrset with options.
+  # Forms:
+  #   - Bare package: pkgs.foobar (coerced to { value = pkgs.foobar; })
+  #   - { value = pkgs.foobar; } -> realpath(lib.getExe value)
+  #   - { value = pkgs.foobar; wrapped = true; } -> toWrapped(realpath(lib.getExe value))
+  #   - { value = pkgs.foobar; path = "/bin/foo"; } -> "${lib.getBin value}${path}"
+  #   - { nameRE = "foo-[0-9]+"; path = "/bin/foo"; } -> regexp pattern
+  packageType =
+    let
+      packageAttrSetType = lib.types.submodule {
+        options = {
+          value = lib.mkOption {
+            type = lib.types.nullOr lib.types.package;
+            default = null;
+            description = "Package to resolve (mutually exclusive with nameRE).";
+          };
+          wrapped = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = "Apply toWrapped transformation (requires value, incompatible with path).";
+          };
+          path = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            description = "Explicit path within package (requires value, incompatible with wrapped).";
+          };
+          nameRE = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            description = "Package name regexp (mutually exclusive with value, requires path).";
+          };
+        };
+      };
+    in
+    lib.types.coercedTo lib.types.package (v: { value = v; }) packageAttrSetType;
 
   # Map a condition field to its OpenSnitch operator spec.
   # The `data` is filled in by mkOperator from the user-supplied value.
@@ -224,8 +262,14 @@ let
     }
   ) arrayExpansionMap;
 
+  packageOption = lib.mkOption {
+    type = lib.types.nullOr packageType;
+    default = null;
+    description = "Resolve a Nix package to a process condition.";
+  };
+
   conditionsTypeWithArrays = lib.types.submodule {
-    options = conditionsOptions // arrayOptions;
+    options = conditionsOptions // arrayOptions // { package = packageOption; };
   };
 
   # Typed schema for one rule entry: either a bare fragment, or wrapped in
@@ -245,7 +289,10 @@ let
       };
     }
     // conditionsOptions
-    // arrayOptions;
+    // arrayOptions
+    // {
+      package = packageOption;
+    };
   };
 
   # Build a single child operator for one condition key.
@@ -307,6 +354,70 @@ let
     duration = "always";
     operator = mkOperator frag;
   };
+
+  resolvePackageValue =
+    frag: pkg:
+    let
+      hasPath = pkg.path or null != null;
+    in
+    removeAttrs frag [ "package" ]
+    // (
+      if hasPath then
+        { processPath = "${lib.getBin pkg.value}${pkg.path}"; }
+      else
+        { processPath = realpath (lib.getExe pkg.value); }
+    );
+
+  resolvePackageValueOrWrapped =
+    name: frag: pkg:
+    let
+      hasWrapped = pkg.wrapped or false;
+      hasPath = pkg.path or null != null;
+    in
+    if hasWrapped && hasPath then
+      builtins.throw "opensnix: rule '${name}' cannot specify both 'wrapped = true' and 'path'."
+    else if hasWrapped then
+      removeAttrs frag [ "package" ]
+      // {
+        processPath = toWrapped (realpath (lib.getExe pkg.value));
+      }
+    else
+      resolvePackageValue frag pkg;
+
+  resolvePackageNameRE =
+    name: frag: pkg:
+    let
+      hasPath = pkg.path or null != null;
+    in
+    if !hasPath then
+      builtins.throw "opensnix: rule '${name}' with 'nameRE' must specify 'path'."
+    else
+      removeAttrs frag [ "package" ]
+      // {
+        processPathRE = "/nix/store/[a-z0-9]{32}-${pkg.nameRE}${pkg.path}";
+      };
+
+  resolvePackage =
+    name: frag:
+    let
+      hasPackage = frag ? package && frag.package != null;
+    in
+    if !hasPackage then
+      frag
+    else
+      let
+        pkg = frag.package;
+        hasProcessPath = frag ? processPath && frag.processPath != null;
+        hasProcessPathRE = frag ? processPathRE && frag.processPathRE != null;
+      in
+      if hasProcessPath || hasProcessPathRE then
+        builtins.throw "opensnix: rule '${name}' cannot specify both 'package' and 'processPath'/'processPathRE'."
+      else if pkg ? value && pkg.value != null then
+        resolvePackageValueOrWrapped name frag pkg
+      else if pkg ? nameRE && pkg.nameRE != null then
+        resolvePackageNameRE name frag pkg
+      else
+        builtins.throw "opensnix: rule '${name}' package must specify either 'value' or 'nameRE'.";
 
   # Turn the opensnix.rules attrset into an attrset of full OpenSnitch rules,
   # shaped exactly like `services.opensnitch.rules` (attrsOf freeform).
@@ -396,8 +507,11 @@ let
           name: entry:
           let
             r = resolve entry;
+            rWithPackage = r // {
+              fragment = resolvePackage name r.fragment;
+            };
           in
-          expandArrays name r
+          expandArrays name rWithPackage
         ) rules
       );
 
