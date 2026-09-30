@@ -13,6 +13,8 @@ let
       descriptionClass = "noun";
     };
 
+  listToRegexp = values: "(?:" + (lib.concatStringsSep "|" (map builtins.toString values)) + ")";
+
   domainsSpec = {
     type = "lists";
     operand = "lists.domains";
@@ -89,6 +91,25 @@ let
       operand = "source.port";
       valueType = lib.types.int;
       regexpType = regexpStrType;
+    };
+
+    ports = {
+      type = "regexp";
+      operand = "dest.port";
+      valueType = lib.types.listOf lib.types.int;
+      inherit listToRegexp;
+    };
+    dstPorts = {
+      type = "regexp";
+      operand = "dest.port";
+      valueType = lib.types.listOf lib.types.int;
+      inherit listToRegexp;
+    };
+    srcPorts = {
+      type = "regexp";
+      operand = "source.port";
+      valueType = lib.types.listOf lib.types.int;
+      inherit listToRegexp;
     };
 
     userName = {
@@ -313,6 +334,12 @@ let
           inherit (spec) type operand;
           data = dir;
         }
+    else if spec ? listToRegexp then
+      {
+        type = "regexp";
+        inherit (spec) operand;
+        data = "$" + (spec.listToRegexp value) + "^";
+      }
     else
       {
         type = if isRegexp then "regexp" else "simple";
@@ -476,8 +503,11 @@ let
           arrayFieldNames = builtins.attrNames arrayFields;
           isEmptyList =
             k: v:
-            (conditionMap.${k}.type or "") == "lists"
-            && ((v == [ ]) || (builtins.isAttrs v && (v.regexp or null) == [ ]));
+            let
+              spec = conditionMap.${k} or { };
+            in
+            ((spec.type or "") == "lists" && ((v == [ ]) || (builtins.isAttrs v && (v.regexp or null) == [ ])))
+            || (spec ? listToRegexp && v == [ ]);
           listFields = lib.filterAttrs isEmptyList fragment;
           listFieldNames = builtins.attrNames listFields;
         in
