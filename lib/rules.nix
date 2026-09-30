@@ -93,6 +93,19 @@ let
       valueType = lib.types.int;
     };
 
+    portRE = {
+      type = "regexp";
+      operand = "dest.port";
+    };
+    dstPortRE = {
+      type = "regexp";
+      operand = "dest.port";
+    };
+    srcPortRE = {
+      type = "regexp";
+      operand = "source.port";
+    };
+
     userName = {
       type = "simple";
       operand = "user.name";

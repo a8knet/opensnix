@@ -82,4 +82,79 @@
     };
     expectedError.msg = "not of type.*signed integer";
   };
+
+  re = {
+    expr = {
+      foo = {
+        portRE = "80|443";
+      };
+    };
+    expected = {
+      foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "regexp";
+          operand = "dest.port";
+          data = "$80|443^";
+        };
+      };
+    };
+  };
+
+  dstRe = {
+    expr = {
+      foo = {
+        dstPortRE = "80|443";
+      };
+    };
+    expected = {
+      foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "regexp";
+          operand = "dest.port";
+          data = "$80|443^";
+        };
+      };
+    };
+  };
+
+  srcRe = {
+    expr = {
+      foo = {
+        srcPortRE = "1024-65535";
+      };
+    };
+    expected = {
+      foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "regexp";
+          operand = "source.port";
+          data = "$1024-65535^";
+        };
+      };
+    };
+  };
+
+  reWithCaret = {
+    expr = {
+      foo = {
+        portRE = "^80|443";
+      };
+    };
+    expectedError.msg = "string without leading";
+  };
+
+  reWithDollar = {
+    expr = {
+      foo = {
+        portRE = "80|443$";
+      };
+    };
+    expectedError.msg = "trailing";
+  };
 }
