@@ -19,14 +19,10 @@ let
     valueType = lib.types.listOf lib.types.str;
     fileName = "domains.list";
     format = values: lib.concatStringsSep "\n" (map (d: "0.0.0.0 ${d}") values);
-  };
-
-  domainsRegexpSpec = {
-    type = "lists";
-    operand = "lists.domains_regexp";
-    valueType = lib.types.listOf regexpStrType;
-    fileName = "domains_regexp.list";
-    format = values: lib.concatStringsSep "\n" (map (d: "^${d}$") values);
+    regexpElementType = regexpStrType;
+    regexpOperand = "lists.domains_regexp";
+    regexpFileName = "domains_regexp.list";
+    regexpFormat = values: lib.concatStringsSep "\n" (map (d: "^${d}$") values);
   };
 
   # Package specification: either a bare package or an attrset with options.
@@ -35,7 +31,7 @@ let
   #   - { value = pkgs.foobar; } -> realpath(lib.getExe value)
   #   - { value = pkgs.foobar; wrapped = true; } -> toWrapped(realpath(lib.getExe value))
   #   - { value = pkgs.foobar; path = "/bin/foo"; } -> "${lib.getBin value}${path}"
-  #   - { nameRE = "foo-[0-9]+"; path = "/bin/foo"; } -> regexp pattern
+  #   - { regexp = "foo-[0-9]+"; path = "/bin/foo"; } -> regexp pattern
   packageType =
     let
       packageAttrSetType = lib.types.submodule {
@@ -43,7 +39,7 @@ let
           value = lib.mkOption {
             type = lib.types.nullOr lib.types.package;
             default = null;
-            description = "Package to resolve (mutually exclusive with nameRE).";
+            description = "Package to resolve (mutually exclusive with regexp).";
           };
           wrapped = lib.mkOption {
             type = lib.types.bool;
@@ -55,8 +51,8 @@ let
             default = null;
             description = "Explicit path within package (requires value, incompatible with wrapped).";
           };
-          nameRE = lib.mkOption {
-            type = lib.types.nullOr lib.types.str;
+          regexp = lib.mkOption {
+            type = lib.types.nullOr regexpStrType;
             default = null;
             description = "Package name regexp (mutually exclusive with value, requires path).";
           };
@@ -67,43 +63,32 @@ let
 
   # Map a condition field to its OpenSnitch operator spec.
   # The `data` is filled in by mkOperator from the user-supplied value.
+  # Conditions with `regexpType` support `{ regexp = "..."; }` syntax.
+  # List conditions with `regexpElementType` support `{ regexp = [...]; }` syntax.
   conditionMap = {
     host = {
       type = "simple";
       operand = "dest.host";
-    };
-    hostRE = {
-      type = "regexp";
-      operand = "dest.host";
+      regexpType = regexpStrType;
     };
 
     port = {
       type = "simple";
       operand = "dest.port";
       valueType = lib.types.int;
+      regexpType = regexpStrType;
     };
     dstPort = {
       type = "simple";
       operand = "dest.port";
       valueType = lib.types.int;
+      regexpType = regexpStrType;
     };
     srcPort = {
       type = "simple";
       operand = "source.port";
       valueType = lib.types.int;
-    };
-
-    portRE = {
-      type = "regexp";
-      operand = "dest.port";
-    };
-    dstPortRE = {
-      type = "regexp";
-      operand = "dest.port";
-    };
-    srcPortRE = {
-      type = "regexp";
-      operand = "source.port";
+      regexpType = regexpStrType;
     };
 
     userName = {
@@ -123,52 +108,33 @@ let
     ip = {
       type = "simple";
       operand = "dest.ip";
+      regexpType = regexpStrType;
     };
     dstIp = {
       type = "simple";
       operand = "dest.ip";
+      regexpType = regexpStrType;
     };
     srcIp = {
       type = "simple";
       operand = "source.ip";
+      regexpType = regexpStrType;
     };
 
     network = {
       type = "simple";
       operand = "dest.network";
+      regexpType = regexpStrType;
     };
     dstNetwork = {
       type = "simple";
       operand = "dest.network";
+      regexpType = regexpStrType;
     };
     srcNetwork = {
       type = "simple";
       operand = "source.network";
-    };
-
-    ipRE = {
-      type = "regexp";
-      operand = "dest.ip";
-    };
-    dstIpRE = {
-      type = "regexp";
-      operand = "dest.ip";
-    };
-    srcIpRE = {
-      type = "regexp";
-      operand = "source.ip";
-    };
-    networkRE = {
-      type = "regexp";
-      operand = "dest.network";
-    };
-    dstNetworkRE = {
-      type = "regexp";
-      operand = "dest.network";
-    };
-    srcNetworkRE = {
-      type = "regexp";
-      operand = "source.network";
+      regexpType = regexpStrType;
     };
 
     proto = {
@@ -179,18 +145,12 @@ let
     processPath = {
       type = "simple";
       operand = "process.path";
+      regexpType = regexpStrType;
     };
     processCommand = {
       type = "simple";
       operand = "process.command";
-    };
-    processPathRE = {
-      type = "regexp";
-      operand = "process.path";
-    };
-    processCommandRE = {
-      type = "regexp";
-      operand = "process.command";
+      regexpType = regexpStrType;
     };
 
     iface = {
@@ -224,21 +184,37 @@ let
 
     domains = domainsSpec;
     hosts = domainsSpec;
-
-    domainsRE = domainsRegexpSpec;
-    hostsRE = domainsRegexpSpec;
   };
+
+  regexpSubmoduleType =
+    innerType:
+    lib.types.submodule {
+      options = {
+        regexp = lib.mkOption {
+          type = innerType;
+          description = ".regexp value must be a string";
+        };
+      };
+    };
 
   # Typed option attrs for a single rule fragment, derived from `conditionMap`
   # so the set of condition keys and their Nix value types live in exactly one
   # place. A spec without `valueType` defaults to a string; numeric conditions
-  # declare `valueType = lib.types.int`. Regexp conditions use `regexpStrType`
-  # to reject user-supplied anchors.
+  # declare `valueType = lib.types.int`. Conditions with `regexpType` support
+  # `{ regexp = "..."; }` syntax.
   conditionsOptions = lib.mapAttrs (
     _: spec:
     let
-      baseType = if spec.type == "regexp" then regexpStrType else spec.valueType or lib.types.str;
-      optionType = lib.types.nullOr baseType;
+      baseType = spec.valueType or lib.types.str;
+      optionType =
+        if spec ? regexpType then
+          lib.types.nullOr (lib.types.either baseType (regexpSubmoduleType spec.regexpType))
+        else if spec ? regexpElementType then
+          lib.types.nullOr (
+            lib.types.either baseType (regexpSubmoduleType (lib.types.listOf spec.regexpElementType))
+          )
+        else
+          lib.types.nullOr baseType;
     in
     lib.mkOption {
       type = optionType;
@@ -313,22 +289,35 @@ let
     frag: key:
     let
       spec = conditionMap.${key};
-      value = frag.${key};
+      raw = frag.${key};
+      isRegexp = builtins.isAttrs raw;
+      value = if isRegexp then raw.regexp else raw;
     in
     if spec.type == "lists" then
-      let
-        content = spec.format value;
-        dir = writeTextDir spec.fileName content;
-      in
-      {
-        inherit (spec) type operand;
-        data = dir;
-      }
+      if isRegexp then
+        let
+          content = spec.regexpFormat value;
+          dir = writeTextDir spec.regexpFileName content;
+        in
+        {
+          type = "lists";
+          operand = spec.regexpOperand;
+          data = dir;
+        }
+      else
+        let
+          content = spec.format value;
+          dir = writeTextDir spec.fileName content;
+        in
+        {
+          inherit (spec) type operand;
+          data = dir;
+        }
     else
       {
-        inherit (spec) type operand;
-        data =
-          if spec.type == "regexp" then "$" + (builtins.toString value) + "^" else builtins.toString value;
+        type = if isRegexp then "regexp" else "simple";
+        inherit (spec) operand;
+        data = if isRegexp then "$" + (builtins.toString value) + "^" else builtins.toString value;
       };
 
   # Build the operator for a rule fragment.
@@ -397,17 +386,19 @@ let
     else
       resolvePackageValue frag pkg;
 
-  resolvePackageNameRE =
+  resolvePackageRegexp =
     name: frag: pkg:
     let
       hasPath = pkg.path or null != null;
     in
     if !hasPath then
-      builtins.throw "opensnix: rule '${name}' with 'nameRE' must specify 'path'."
+      builtins.throw "opensnix: rule '${name}' with 'regexp' must specify 'path'."
     else
       removeAttrs frag [ "package" ]
       // {
-        processPathRE = "/nix/store/[a-z0-9]{32}-${pkg.nameRE}${pkg.path}";
+        processPath = {
+          regexp = "/nix/store/[a-z0-9]{32}-${pkg.regexp}${pkg.path}";
+        };
       };
 
   resolvePackage =
@@ -421,16 +412,15 @@ let
       let
         pkg = frag.package;
         hasProcessPath = frag ? processPath && frag.processPath != null;
-        hasProcessPathRE = frag ? processPathRE && frag.processPathRE != null;
       in
-      if hasProcessPath || hasProcessPathRE then
-        builtins.throw "opensnix: rule '${name}' cannot specify both 'package' and 'processPath'/'processPathRE'."
+      if hasProcessPath then
+        builtins.throw "opensnix: rule '${name}' cannot specify both 'package' and 'processPath'."
       else if pkg ? value && pkg.value != null then
         resolvePackageValueOrWrapped name frag pkg
-      else if pkg ? nameRE && pkg.nameRE != null then
-        resolvePackageNameRE name frag pkg
+      else if pkg ? regexp && pkg.regexp != null then
+        resolvePackageRegexp name frag pkg
       else
-        builtins.throw "opensnix: rule '${name}' package must specify either 'value' or 'nameRE'.";
+        builtins.throw "opensnix: rule '${name}' package must specify either 'value' or 'regexp'.";
 
   # Turn the opensnix.rules attrset into an attrset of full OpenSnitch rules,
   # shaped exactly like `services.opensnitch.rules` (attrsOf freeform).
@@ -484,7 +474,11 @@ let
           inherit (r) fragment;
           arrayFields = lib.filterAttrs (k: _: (fragment.${k} or null) != null) arrayExpansionMap;
           arrayFieldNames = builtins.attrNames arrayFields;
-          listFields = lib.filterAttrs (k: v: v == [ ] && (conditionMap.${k}.type or "") == "lists") fragment;
+          isEmptyList =
+            k: v:
+            (conditionMap.${k}.type or "") == "lists"
+            && ((v == [ ]) || (builtins.isAttrs v && (v.regexp or null) == [ ]));
+          listFields = lib.filterAttrs isEmptyList fragment;
           listFieldNames = builtins.attrNames listFields;
         in
         if builtins.length listFieldNames > 0 then

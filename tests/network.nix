@@ -56,10 +56,10 @@
     };
   };
 
-  re = {
+  regexp = {
     expr = {
       foo = {
-        networkRE = "10\\..*";
+        network.regexp = "10\\..*";
       };
     };
     expected = {
@@ -75,10 +75,10 @@
     };
   };
 
-  dstRe = {
+  dstRegexp = {
     expr = {
       foo = {
-        dstNetworkRE = "10\\..*";
+        dstNetwork.regexp = "10\\..*";
       };
     };
     expected = {
@@ -94,10 +94,10 @@
     };
   };
 
-  srcRe = {
+  srcRegexp = {
     expr = {
       foo = {
-        srcNetworkRE = "10\\..*";
+        srcNetwork.regexp = "10\\..*";
       };
     };
     expected = {
@@ -113,28 +113,28 @@
     };
   };
 
-  reWithCaret = {
+  regexpWithCaret = {
     expr = {
       foo = {
-        networkRE = "^10\\..*";
+        network.regexp = "^10\\..*";
       };
     };
     expectedError.msg = "string without leading";
   };
 
-  dstReWithDollar = {
+  dstRegexpWithDollar = {
     expr = {
       foo = {
-        dstNetworkRE = "10\\..*$";
+        dstNetwork.regexp = "10\\..*$";
       };
     };
     expectedError.msg = "trailing";
   };
 
-  srcReWithBoth = {
+  srcRegexpWithBoth = {
     expr = {
       foo = {
-        srcNetworkRE = "^10\\..*$";
+        srcNetwork.regexp = "^10\\..*$";
       };
     };
     expectedError.msg = "string without leading";

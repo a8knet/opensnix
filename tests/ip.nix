@@ -56,10 +56,10 @@
     };
   };
 
-  re = {
+  regexp = {
     expr = {
       foo = {
-        ipRE = "192\\.168\\..*";
+        ip.regexp = "192\\.168\\..*";
       };
     };
     expected = {
@@ -75,10 +75,10 @@
     };
   };
 
-  dstRe = {
+  dstRegexp = {
     expr = {
       foo = {
-        dstIpRE = "192\\.168\\..*";
+        dstIp.regexp = "192\\.168\\..*";
       };
     };
     expected = {
@@ -94,10 +94,10 @@
     };
   };
 
-  srcRe = {
+  srcRegexp = {
     expr = {
       foo = {
-        srcIpRE = "192\\.168\\..*";
+        srcIp.regexp = "192\\.168\\..*";
       };
     };
     expected = {
@@ -113,28 +113,28 @@
     };
   };
 
-  reWithCaret = {
+  regexpWithCaret = {
     expr = {
       foo = {
-        ipRE = "^192\\.168\\..*";
+        ip.regexp = "^192\\.168\\..*";
       };
     };
     expectedError.msg = "string without leading";
   };
 
-  dstReWithDollar = {
+  dstRegexpWithDollar = {
     expr = {
       foo = {
-        dstIpRE = "192\\.168\\..*$";
+        dstIp.regexp = "192\\.168\\..*$";
       };
     };
     expectedError.msg = "trailing";
   };
 
-  srcReWithBoth = {
+  srcRegexpWithBoth = {
     expr = {
       foo = {
-        srcIpRE = "^192\\.168\\..*$";
+        srcIp.regexp = "^192\\.168\\..*$";
       };
     };
     expectedError.msg = "string without leading";

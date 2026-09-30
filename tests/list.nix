@@ -67,10 +67,10 @@
     };
   };
 
-  hostREPort = {
+  hostRegexpPort = {
     expr = {
       foo = {
-        hostRE = "example.*[.]com";
+        host.regexp = "example.*[.]com";
         port = 443;
       };
     };

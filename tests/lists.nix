@@ -91,10 +91,10 @@
     expectedError.msg = "empty list for 'domains'";
   };
 
-  domainsRE-content = {
+  domainsRegexp-content = {
     expr = {
       foo = {
-        domainsRE = [
+        domains.regexp = [
           ".*example[.]com"
           "sub[.]example[.]org"
         ];
@@ -118,10 +118,10 @@
     };
   };
 
-  hostsRE-alias-content = {
+  hostsRegexp-alias-content = {
     expr = {
       foo = {
-        hostsRE = [ ".*example[.]com" ];
+        hosts.regexp = [ ".*example[.]com" ];
       };
     };
     expected = {
@@ -140,28 +140,28 @@
     };
   };
 
-  domainsRE-empty-error = {
+  domainsRegexp-empty-error = {
     expr = {
       foo = {
-        domainsRE = [ ];
+        domains.regexp = [ ];
       };
     };
-    expectedError.msg = "empty list for 'domainsRE'";
+    expectedError.msg = "empty list for 'domains'";
   };
 
-  domainsRE-withCaret = {
+  domainsRegexp-withCaret = {
     expr = {
       foo = {
-        domainsRE = [ "^example.com" ];
+        domains.regexp = [ "^example.com" ];
       };
     };
     expectedError.msg = "string without leading";
   };
 
-  hostsRE-withDollar = {
+  hostsRegexp-withDollar = {
     expr = {
       foo = {
-        hostsRE = [ "example.com$" ];
+        hosts.regexp = [ "example.com$" ];
       };
     };
     expectedError.msg = "trailing";

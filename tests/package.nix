@@ -116,11 +116,11 @@ in
     };
   };
 
-  nameREWithPath = {
+  regexpWithPath = {
     expr = {
       foo = {
         package = {
-          nameRE = "curl-[0-9]+";
+          regexp = "curl-[0-9]+";
           path = "/bin/curl";
         };
       };
@@ -185,11 +185,11 @@ in
     expectedError.msg = "cannot specify both";
   };
 
-  packageWithProcessPathRE = {
+  packageWithProcessPathRegexp = {
     expr = {
       foo = {
         package = firefox;
-        processPathRE = "/usr/bin/.*";
+        processPath.regexp = "/usr/bin/.*";
       };
     };
     expectedError.msg = "cannot specify both";
@@ -208,12 +208,10 @@ in
     expectedError.msg = "cannot specify both";
   };
 
-  nameREWithoutPath = {
+  regexpWithoutPath = {
     expr = {
       foo = {
-        package = {
-          nameRE = "curl-[0-9]+";
-        };
+        package.regexp = "curl-[0-9]+";
       };
     };
     expectedError.msg = "must specify 'path'";
@@ -225,6 +223,6 @@ in
         package = { };
       };
     };
-    expectedError.msg = "must specify either 'value' or 'nameRE'";
+    expectedError.msg = "must specify either 'value' or 'regexp'";
   };
 }

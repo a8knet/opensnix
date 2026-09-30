@@ -83,10 +83,10 @@
     expectedError.msg = "not of type.*signed integer";
   };
 
-  re = {
+  regexp = {
     expr = {
       foo = {
-        portRE = "80|443";
+        port.regexp = "80|443";
       };
     };
     expected = {
@@ -102,10 +102,10 @@
     };
   };
 
-  dstRe = {
+  dstRegexp = {
     expr = {
       foo = {
-        dstPortRE = "80|443";
+        dstPort.regexp = "80|443";
       };
     };
     expected = {
@@ -121,10 +121,10 @@
     };
   };
 
-  srcRe = {
+  srcRegexp = {
     expr = {
       foo = {
-        srcPortRE = "1024-65535";
+        srcPort.regexp = "1024-65535";
       };
     };
     expected = {
@@ -140,19 +140,19 @@
     };
   };
 
-  reWithCaret = {
+  regexpWithCaret = {
     expr = {
       foo = {
-        portRE = "^80|443";
+        port.regexp = "^80|443";
       };
     };
     expectedError.msg = "string without leading";
   };
 
-  reWithDollar = {
+  regexpWithDollar = {
     expr = {
       foo = {
-        portRE = "80|443$";
+        port.regexp = "80|443$";
       };
     };
     expectedError.msg = "trailing";

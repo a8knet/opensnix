@@ -18,10 +18,10 @@
     };
   };
 
-  re = {
+  regexp = {
     expr = {
       foo = {
-        hostRE = "example.*[.]com";
+        host.regexp = "example.*[.]com";
       };
     };
     expected = {
@@ -46,19 +46,19 @@
     expectedError.msg = "not of type.*string";
   };
 
-  reWithCaret = {
+  regexpWithCaret = {
     expr = {
       foo = {
-        hostRE = "^example.*[.]com";
+        host.regexp = "^example.*[.]com";
       };
     };
     expectedError.msg = "string without leading";
   };
 
-  reWithDollar = {
+  regexpWithDollar = {
     expr = {
       foo = {
-        hostRE = "example.*[.]com$";
+        host.regexp = "example.*[.]com$";
       };
     };
     expectedError.msg = "trailing";

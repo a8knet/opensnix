@@ -37,10 +37,10 @@
     };
   };
 
-  pathRE = {
+  pathRegexp = {
     expr = {
       foo = {
-        processPathRE = "/usr/bin/.*";
+        processPath.regexp = "/usr/bin/.*";
       };
     };
     expected = {
@@ -56,10 +56,10 @@
     };
   };
 
-  commandRE = {
+  commandRegexp = {
     expr = {
       foo = {
-        processCommandRE = "fire.*";
+        processCommand.regexp = "fire.*";
       };
     };
     expected = {
@@ -75,28 +75,28 @@
     };
   };
 
-  pathREWithCaret = {
+  pathRegexpWithCaret = {
     expr = {
       foo = {
-        processPathRE = "^/usr/bin/.*";
+        processPath.regexp = "^/usr/bin/.*";
       };
     };
     expectedError.msg = "string without lead";
   };
 
-  commandREWithDollar = {
+  commandRegexpWithDollar = {
     expr = {
       foo = {
-        processCommandRE = "fire.*$";
+        processCommand.regexp = "fire.*$";
       };
     };
     expectedError.msg = "trailing";
   };
 
-  pathREWithBoth = {
+  pathRegexpWithBoth = {
     expr = {
       foo = {
-        processPathRE = "^/usr/bin/.*$";
+        processPath.regexp = "^/usr/bin/.*$";
       };
     };
     expectedError.msg = "string without lead";
