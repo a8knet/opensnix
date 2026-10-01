@@ -8,6 +8,7 @@ let
     {
       type = "derivation";
       inherit outPath pname;
+      name = "${pname}-1.0";
       meta = {
         inherit mainProgram;
       };
@@ -224,5 +225,75 @@ in
       };
     };
     expectedError.msg = "must specify either 'value' or 'regexp'";
+  };
+
+  wildcardScopeWithPackage = {
+    expr = {
+      foo = {
+        package = {
+          value = firefox;
+          scope = "wildcard";
+        };
+      };
+    };
+    expected = {
+      foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "regexp";
+          operand = "process.path";
+          data = "$/nix/store/[a-z0-9]{32}-firefox-1\\.0/.*^";
+        };
+      };
+    };
+  };
+
+  wildcardScopeWithRegexp = {
+    expr = {
+      foo = {
+        package = {
+          regexp = "curl-[0-9]+";
+          scope = "wildcard";
+        };
+      };
+    };
+    expected = {
+      foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "regexp";
+          operand = "process.path";
+          data = "$/nix/store/[a-z0-9]{32}-curl-[0-9]+/.*^";
+        };
+      };
+    };
+  };
+
+  wildcardScopeWithPathError = {
+    expr = {
+      foo = {
+        package = {
+          value = firefox;
+          path = "/bin/firefox";
+          scope = "wildcard";
+        };
+      };
+    };
+    expectedError.msg = "wildcard scope cannot specify 'path'";
+  };
+
+  wildcardScopeWithWrappedError = {
+    expr = {
+      foo = {
+        package = {
+          value = firefox;
+          wrapped = true;
+          scope = "wildcard";
+        };
+      };
+    };
+    expectedError.msg = "wildcard scope cannot specify 'wrapped'";
   };
 }

@@ -1,6 +1,7 @@
 {
   rules,
   lib,
+  types,
 }:
 let
   mockWriteTextDir = name: content: { inherit name content; };
@@ -10,10 +11,12 @@ let
     realpath = x: x;
   };
 
-  opensnixLib = rules {
-    inherit lib;
-    utils = mockUtils;
-  };
+  opensnixLib =
+    (rules {
+      inherit lib types;
+      utils = mockUtils;
+    })
+    // types;
 
   ts = "2026-09-22T00:00:00.000000000+00:00";
   base = {

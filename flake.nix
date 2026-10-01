@@ -18,6 +18,7 @@
         tests = import ./tests {
           inherit (nixpkgs) lib;
           rules = import ./lib/rules.nix;
+          types = import ./lib/types.nix { inherit (nixpkgs) lib; };
         };
       };
 

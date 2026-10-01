@@ -1,6 +1,11 @@
-{ lib, utils }:
+{
+  lib,
+  utils,
+  types,
+}:
 let
   inherit (utils) writeTextDir realpath;
+  inherit (types) packageScopeType;
 
   toWrapped = path: "${dirOf path}/.${baseNameOf path}-wrapped";
 
@@ -57,6 +62,11 @@ let
             type = lib.types.nullOr regexpStrType;
             default = null;
             description = "Package name regexp (mutually exclusive with value, requires path).";
+          };
+          scope = lib.mkOption {
+            type = lib.types.nullOr packageScopeType;
+            default = null;
+            description = "Override defaultPackageScope for this rule.";
           };
         };
       };
@@ -428,8 +438,48 @@ let
         };
       };
 
+  resolvePackageWildcard =
+    name: frag: pkg:
+    let
+      hasPath = pkg.path or null != null;
+      hasWrapped = pkg.wrapped or false;
+      hasRegexp = pkg ? regexp && pkg.regexp != null;
+      hasValue = pkg ? value && pkg.value != null;
+      pattern =
+        if hasRegexp then
+          pkg.regexp
+        else if hasValue then
+          lib.escapeRegex pkg.value.name
+        else
+          builtins.throw "opensnix: rule '${name}' package must specify either 'value' or 'regexp'.";
+    in
+    if hasPath then
+      builtins.throw "opensnix: rule '${name}' with wildcard scope cannot specify 'path'."
+    else if hasWrapped then
+      builtins.throw "opensnix: rule '${name}' with wildcard scope cannot specify 'wrapped'."
+    else
+      removeAttrs frag [ "package" ]
+      // {
+        processPath = {
+          regexp = "/nix/store/[a-z0-9]{32}-${pattern}/.*";
+        };
+      };
+
+  resolvePackageExact =
+    name: frag: pkg:
+    let
+      hasRegexp = pkg ? regexp && pkg.regexp != null;
+      hasValue = pkg ? value && pkg.value != null;
+    in
+    if hasRegexp then
+      resolvePackageRegexp name frag pkg
+    else if hasValue then
+      resolvePackageValueOrWrapped name frag pkg
+    else
+      builtins.throw "opensnix: rule '${name}' package must specify either 'value' or 'regexp'.";
+
   resolvePackage =
-    name: frag:
+    name: frag: defaultScope:
     let
       hasPackage = frag ? package && frag.package != null;
     in
@@ -438,16 +488,15 @@ let
     else
       let
         pkg = frag.package;
+        scope = if pkg.scope or null != null then pkg.scope else defaultScope;
         hasProcessPath = frag ? processPath && frag.processPath != null;
       in
       if hasProcessPath then
         builtins.throw "opensnix: rule '${name}' cannot specify both 'package' and 'processPath'."
-      else if pkg ? value && pkg.value != null then
-        resolvePackageValueOrWrapped name frag pkg
-      else if pkg ? regexp && pkg.regexp != null then
-        resolvePackageRegexp name frag pkg
+      else if scope == "wildcard" then
+        resolvePackageWildcard name frag pkg
       else
-        builtins.throw "opensnix: rule '${name}' package must specify either 'value' or 'regexp'.";
+        resolvePackageExact name frag pkg;
 
   # Turn the opensnix.rules attrset into an attrset of full OpenSnitch rules,
   # shaped exactly like `services.opensnitch.rules` (attrsOf freeform).
@@ -459,6 +508,7 @@ let
   mkRules =
     {
       defaultAction,
+      defaultPackageScope,
       rules,
       timestamp,
     }:
@@ -545,7 +595,7 @@ let
           let
             r = resolve entry;
             rWithPackage = r // {
-              fragment = resolvePackage name r.fragment;
+              fragment = resolvePackage name r.fragment defaultPackageScope;
             };
           in
           expandArrays name rWithPackage

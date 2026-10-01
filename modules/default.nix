@@ -10,7 +10,12 @@ let
   cfg = config.opensnix;
 
   rendered = opensnixLib.mkRules {
-    inherit (cfg) defaultAction rules timestamp;
+    inherit (cfg)
+      defaultAction
+      defaultPackageScope
+      rules
+      timestamp
+      ;
   };
 in
 {
@@ -26,6 +31,18 @@ in
       description = ''
         Action applied to rules that do not specify an explicit
         `allow` or `deny` subkey.
+      '';
+    };
+
+    defaultPackageScope = lib.mkOption {
+      type = opensnixLib.packageScopeType;
+      default = "exact";
+      description = ''
+        Default package resolution scope. Can be overridden per-rule with
+        `package.scope`.
+
+        - `exact`: Resolve to a specific executable path
+        - `wildcard`: Match any executable within the package directory
       '';
     };
 
