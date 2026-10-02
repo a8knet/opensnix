@@ -96,7 +96,7 @@
         operator = {
           type = "regexp";
           operand = "dest.port";
-          data = "$80|443^";
+          data = "^80|443$";
         };
       };
     };
@@ -115,7 +115,7 @@
         operator = {
           type = "regexp";
           operand = "dest.port";
-          data = "$80|443^";
+          data = "^80|443$";
         };
       };
     };
@@ -134,7 +134,7 @@
         operator = {
           type = "regexp";
           operand = "source.port";
-          data = "$1024-65535^";
+          data = "^1024-65535$";
         };
       };
     };

@@ -31,7 +31,7 @@
         operator = {
           type = "regexp";
           operand = "dest.host";
-          data = "$example.*[.]com^";
+          data = "^example.*[.]com$";
         };
       };
     };

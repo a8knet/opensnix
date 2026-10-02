@@ -348,13 +348,13 @@ let
       {
         type = "regexp";
         inherit (spec) operand;
-        data = "$" + (spec.listToRegexp value) + "^";
+        data = "^" + (spec.listToRegexp value) + "$";
       }
     else
       {
         type = if isRegexp then "regexp" else "simple";
         inherit (spec) operand;
-        data = if isRegexp then "$" + (builtins.toString value) + "^" else builtins.toString value;
+        data = if isRegexp then "^" + (builtins.toString value) + "$" else builtins.toString value;
       };
 
   # Build the operator for a rule fragment.

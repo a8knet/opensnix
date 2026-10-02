@@ -50,7 +50,7 @@
         operator = {
           type = "regexp";
           operand = "process.path";
-          data = "$/usr/bin/.*^";
+          data = "^/usr/bin/.*$";
         };
       };
     };
@@ -69,7 +69,7 @@
         operator = {
           type = "regexp";
           operand = "process.command";
-          data = "$fire.*^";
+          data = "^fire.*$";
         };
       };
     };

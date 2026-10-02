@@ -133,7 +133,7 @@ in
         operator = {
           type = "regexp";
           operand = "process.path";
-          data = "$/nix/store/[a-z0-9]{32}-curl-[0-9]+/bin/curl^";
+          data = "^/nix/store/[a-z0-9]{32}-curl-[0-9]+/bin/curl$";
         };
       };
     };
@@ -243,7 +243,7 @@ in
         operator = {
           type = "regexp";
           operand = "process.path";
-          data = "$/nix/store/[a-z0-9]{32}-firefox-1\\.0/.*^";
+          data = "^/nix/store/[a-z0-9]{32}-firefox-1\\.0/.*$";
         };
       };
     };
@@ -265,7 +265,7 @@ in
         operator = {
           type = "regexp";
           operand = "process.path";
-          data = "$/nix/store/[a-z0-9]{32}-curl-[0-9]+/.*^";
+          data = "^/nix/store/[a-z0-9]{32}-curl-[0-9]+/.*$";
         };
       };
     };

@@ -69,7 +69,7 @@
         operator = {
           type = "regexp";
           operand = "dest.ip";
-          data = "$192\\.168\\..*^";
+          data = "^192\\.168\\..*$";
         };
       };
     };
@@ -88,7 +88,7 @@
         operator = {
           type = "regexp";
           operand = "dest.ip";
-          data = "$192\\.168\\..*^";
+          data = "^192\\.168\\..*$";
         };
       };
     };
@@ -107,7 +107,7 @@
         operator = {
           type = "regexp";
           operand = "source.ip";
-          data = "$192\\.168\\..*^";
+          data = "^192\\.168\\..*$";
         };
       };
     };

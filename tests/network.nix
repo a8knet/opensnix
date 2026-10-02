@@ -69,7 +69,7 @@
         operator = {
           type = "regexp";
           operand = "dest.network";
-          data = "$10\\..*^";
+          data = "^10\\..*$";
         };
       };
     };
@@ -88,7 +88,7 @@
         operator = {
           type = "regexp";
           operand = "dest.network";
-          data = "$10\\..*^";
+          data = "^10\\..*$";
         };
       };
     };
@@ -107,7 +107,7 @@
         operator = {
           type = "regexp";
           operand = "source.network";
-          data = "$10\\..*^";
+          data = "^10\\..*$";
         };
       };
     };

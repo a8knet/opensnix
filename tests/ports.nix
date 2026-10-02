@@ -16,7 +16,7 @@
         operator = {
           type = "regexp";
           operand = "dest.port";
-          data = "$(?:80|443|8080)^";
+          data = "^(?:80|443|8080)$";
         };
       };
     };
@@ -38,7 +38,7 @@
         operator = {
           type = "regexp";
           operand = "dest.port";
-          data = "$(?:80|443)^";
+          data = "^(?:80|443)$";
         };
       };
     };
@@ -60,7 +60,7 @@
         operator = {
           type = "regexp";
           operand = "source.port";
-          data = "$(?:1024|2048)^";
+          data = "^(?:1024|2048)$";
         };
       };
     };
@@ -79,7 +79,7 @@
         operator = {
           type = "regexp";
           operand = "dest.port";
-          data = "$(?:80)^";
+          data = "^(?:80)$";
         };
       };
     };
