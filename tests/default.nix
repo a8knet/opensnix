@@ -6,7 +6,7 @@
 let
   mockWriteTextDir = name: content: { inherit name content; };
 
-  mockUtils = {
+  mockPkgsUtils = {
     writeTextDir = mockWriteTextDir;
     realpath = x: x;
   };
@@ -14,7 +14,7 @@ let
   opensnixLib =
     (rules {
       inherit lib types;
-      utils = mockUtils;
+      pkgsUtils = mockPkgsUtils;
     })
     // types;
 

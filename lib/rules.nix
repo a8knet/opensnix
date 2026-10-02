@@ -1,10 +1,9 @@
 {
   lib,
-  utils,
+  pkgsUtils,
   types,
 }:
 let
-  inherit (utils) writeTextDir realpath;
   inherit (types) packageScopeType isRfc3339UTC;
 
   toWrapped = path: "${dirOf path}/.${baseNameOf path}-wrapped";
@@ -328,7 +327,7 @@ let
       if isRegexp then
         let
           content = spec.regexpFormat value;
-          dir = writeTextDir spec.regexpFileName content;
+          dir = pkgsUtils.writeTextDir spec.regexpFileName content;
         in
         {
           type = "lists";
@@ -338,7 +337,7 @@ let
       else
         let
           content = spec.format value;
-          dir = writeTextDir spec.fileName content;
+          dir = pkgsUtils.writeTextDir spec.fileName content;
         in
         {
           inherit (spec) type operand;
@@ -404,7 +403,7 @@ let
       if hasPath then
         { processPath = "${lib.getBin pkg.value}${pkg.path}"; }
       else
-        { processPath = realpath (lib.getExe pkg.value); }
+        { processPath = pkgsUtils.realpath (lib.getExe pkg.value); }
     );
 
   resolvePackageValueOrWrapped =
@@ -418,7 +417,7 @@ let
     else if hasWrapped then
       removeAttrs frag [ "package" ]
       // {
-        processPath = toWrapped (realpath (lib.getExe pkg.value));
+        processPath = toWrapped (pkgsUtils.realpath (lib.getExe pkg.value));
       }
     else
       resolvePackageValue frag pkg;
