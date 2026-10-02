@@ -5,7 +5,7 @@
 }:
 let
   inherit (utils) writeTextDir realpath;
-  inherit (types) packageScopeType;
+  inherit (types) packageScopeType isRfc3339UTC;
 
   toWrapped = path: "${dirOf path}/.${baseNameOf path}-wrapped";
 
@@ -604,7 +604,9 @@ let
 
       dups = lib.filterAttrs (_: vs: builtins.length vs > 1) (lib.groupBy (e: e.name) expandedEntries);
     in
-    if dups != { } then
+    if !isRfc3339UTC timestamp then
+      builtins.throw "opensnix: timestamp '${timestamp}' is not a valid RFC3339 UTC date-time (expected YYYY-MM-DDTHH:MM:SSZ)."
+    else if dups != { } then
       throw "opensnix: duplicate rule name '${builtins.head (lib.attrNames dups)}' generated; check for duplicate values in array fields or conflicting rule names."
     else
       builtins.listToAttrs (

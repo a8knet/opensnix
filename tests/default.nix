@@ -18,13 +18,7 @@ let
     })
     // types;
 
-  ts = "2026-09-22T00:00:00.000000000+00:00";
-  base = {
-    created = ts;
-    updated = ts;
-    enabled = true;
-    duration = "always";
-  };
+  ts = "2026-09-22T00:00:00Z";
 
   suiteNames = lib.attrNames (
     lib.filterAttrs (n: t: t == "regular" && n != "default.nix" && lib.hasSuffix ".nix" n) (
@@ -35,6 +29,14 @@ let
   transform =
     t:
     let
+      useDefaultTimestamp = t.useDefaultTimestamp or false;
+      expectedTs = t.expectedTs or (t.timestamp or ts);
+      base = {
+        created = expectedTs;
+        updated = expectedTs;
+        enabled = true;
+        duration = "always";
+      };
       eval = lib.evalModules {
         modules = [
           (
@@ -50,13 +52,15 @@ let
                   lib = {
                     default = _: opensnixLib;
                   };
-                  lastModifiedDate = ts;
+                  lastModifiedDate = t.lastModifiedDate or ts;
                 };
                 opensnix = {
                   enable = lib.mkForce true;
                   defaultAction = t.defaultAction or "allow";
                   rules = t.expr;
-                  timestamp = ts;
+                }
+                // lib.optionalAttrs (!useDefaultTimestamp) {
+                  timestamp = t.timestamp or ts;
                 };
               };
             }

@@ -47,11 +47,16 @@ in
     };
 
     timestamp = lib.mkOption {
-      type = lib.types.str;
-      default = self.lastModifiedDate;
+      type = opensnixLib.timestampType;
+      default = opensnixLib.flakeDateToRfc3339 self.lastModifiedDate;
       description = ''
         Timestamp used for the `created`/`updated` fields of every rule.
-        Defaults to the flake's `self.lastModifiedDate`.
+        Must be an RFC3339 UTC date-time: exactly `YYYY-MM-DDTHH:MM:SSZ`
+        (e.g. `2026-10-02T18:31:07Z`), with no fractional seconds and no
+        numeric timezone offset.
+
+        Defaults to the flake's `lastModifiedDate` converted from its
+        `YYYYMMDDHHMMSS` form to an RFC3339 UTC timestamp.
       '';
     };
 
