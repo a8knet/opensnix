@@ -48,7 +48,7 @@ in
 
     timestamp = lib.mkOption {
       type = opensnixLib.timestampType;
-      default = opensnixLib.flakeDateToRfc3339 self.lastModifiedDate;
+      default = opensnixLib.utils.flakeDateToRfc3339 self.lastModifiedDate;
       description = ''
         Timestamp used for the `created`/`updated` fields of every rule.
         Must be an RFC3339 UTC date-time: exactly `YYYY-MM-DDTHH:MM:SSZ`

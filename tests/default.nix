@@ -16,7 +16,10 @@ let
       inherit lib types;
       pkgsUtils = mockPkgsUtils;
     })
-    // types;
+    // types
+    // {
+      utils = import ../lib/utils.nix;
+    };
 
   ts = "2026-09-22T00:00:00Z";
 
