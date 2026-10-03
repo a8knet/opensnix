@@ -10,7 +10,7 @@
         name = "opensnix-foo";
         action = "allow";
         operator = {
-          type = "simple";
+          type = "network";
           operand = "dest.network";
           data = "10.0.0.0/8";
         };
@@ -29,7 +29,7 @@
         name = "opensnix-foo";
         action = "allow";
         operator = {
-          type = "simple";
+          type = "network";
           operand = "dest.network";
           data = "10.0.0.0/8";
         };
@@ -48,7 +48,7 @@
         name = "opensnix-foo";
         action = "allow";
         operator = {
-          type = "simple";
+          type = "network";
           operand = "source.network";
           data = "10.0.0.0/8";
         };
@@ -56,87 +56,87 @@
     };
   };
 
-  regexp = {
+  aliasLan = {
+    expr = {
+      foo = {
+        network = "LAN";
+      };
+    };
+    expected = {
+      foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "network";
+          operand = "dest.network";
+          data = "LAN";
+        };
+      };
+    };
+  };
+
+  aliasMulticast = {
+    expr = {
+      foo = {
+        dstNetwork = "MULTICAST";
+      };
+    };
+    expected = {
+      foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "network";
+          operand = "dest.network";
+          data = "MULTICAST";
+        };
+      };
+    };
+  };
+
+  aliasSrc = {
+    expr = {
+      foo = {
+        srcNetwork = "LAN";
+      };
+    };
+    expected = {
+      foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "network";
+          operand = "source.network";
+          data = "LAN";
+        };
+      };
+    };
+  };
+
+  regexpRejected = {
     expr = {
       foo = {
         network.regexp = "10\\..*";
       };
     };
-    expected = {
-      foo = {
-        name = "opensnix-foo";
-        action = "allow";
-        operator = {
-          type = "regexp";
-          operand = "dest.network";
-          data = "^10\\..*$";
-        };
-      };
-    };
+    expectedError.msg = "network' is not of type";
   };
 
-  dstRegexp = {
+  dstRegexpRejected = {
     expr = {
       foo = {
         dstNetwork.regexp = "10\\..*";
       };
     };
-    expected = {
-      foo = {
-        name = "opensnix-foo";
-        action = "allow";
-        operator = {
-          type = "regexp";
-          operand = "dest.network";
-          data = "^10\\..*$";
-        };
-      };
-    };
+    expectedError.msg = "dstNetwork' is not of type";
   };
 
-  srcRegexp = {
+  srcRegexpRejected = {
     expr = {
       foo = {
         srcNetwork.regexp = "10\\..*";
       };
     };
-    expected = {
-      foo = {
-        name = "opensnix-foo";
-        action = "allow";
-        operator = {
-          type = "regexp";
-          operand = "source.network";
-          data = "^10\\..*$";
-        };
-      };
-    };
-  };
-
-  regexpWithCaret = {
-    expr = {
-      foo = {
-        network.regexp = "^10\\..*";
-      };
-    };
-    expectedError.msg = "string without leading";
-  };
-
-  dstRegexpWithDollar = {
-    expr = {
-      foo = {
-        dstNetwork.regexp = "10\\..*$";
-      };
-    };
-    expectedError.msg = "trailing";
-  };
-
-  srcRegexpWithBoth = {
-    expr = {
-      foo = {
-        srcNetwork.regexp = "^10\\..*$";
-      };
-    };
-    expectedError.msg = "string without leading";
+    expectedError.msg = "srcNetwork' is not of type";
   };
 }

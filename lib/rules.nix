@@ -152,19 +152,16 @@ let
     };
 
     network = {
-      type = "simple";
+      type = "network";
       operand = "dest.network";
-      regexpType = regexpStrType;
     };
     dstNetwork = {
-      type = "simple";
+      type = "network";
       operand = "dest.network";
-      regexpType = regexpStrType;
     };
     srcNetwork = {
-      type = "simple";
+      type = "network";
       operand = "source.network";
-      regexpType = regexpStrType;
     };
 
     proto = {
@@ -351,7 +348,7 @@ let
       }
     else
       {
-        type = if isRegexp then "regexp" else "simple";
+        type = if isRegexp then "regexp" else spec.type;
         inherit (spec) operand;
         data = if isRegexp then "^" + (builtins.toString value) + "$" else builtins.toString value;
       };

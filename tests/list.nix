@@ -97,4 +97,41 @@
       };
     };
   };
+
+  networkUserPort = {
+    expr = {
+      foo = {
+        user = "systemd-resolve";
+        network = "LAN";
+        dstPort = 5353;
+      };
+    };
+    expected = {
+      foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "list";
+          operand = "list";
+          list = [
+            {
+              type = "simple";
+              operand = "dest.port";
+              data = "5353";
+            }
+            {
+              type = "network";
+              operand = "dest.network";
+              data = "LAN";
+            }
+            {
+              type = "simple";
+              operand = "user.name";
+              data = "systemd-resolve";
+            }
+          ];
+        };
+      };
+    };
+  };
 }
