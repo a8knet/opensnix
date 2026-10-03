@@ -4,7 +4,7 @@ let
   pkgsUtils = import ./pkgs-utils.nix { inherit pkgs; };
   types = import ./types.nix { inherit lib; };
   rules = import ./rules.nix {
-    inherit lib pkgsUtils types;
+    inherit lib pkgsUtils;
   };
 in
-rules // types // { inherit utils; }
+rules // { inherit types utils; }

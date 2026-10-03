@@ -1,7 +1,6 @@
 {
   rules,
   lib,
-  types,
 }:
 let
   mockWriteTextDir = name: content: { inherit name content; };
@@ -13,11 +12,11 @@ let
 
   opensnixLib =
     (rules {
-      inherit lib types;
+      inherit lib;
       pkgsUtils = mockPkgsUtils;
     })
-    // types
     // {
+      types = import ../lib/types.nix { inherit lib; };
       utils = import ../lib/utils.nix;
     };
 

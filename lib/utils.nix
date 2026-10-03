@@ -9,7 +9,7 @@ in
 
   # Convert a flake `lastModifiedDate` (YYYYMMDDHHMMSS) into an RFC3339 UTC
   # timestamp. Any other value is passed through unchanged so that
-  # `timestampType` reports it as invalid.
+  # `timestamp` reports it as invalid.
   flakeDateToRfc3339 =
     d:
     if builtins.match "[0-9]{14}" d != null then

@@ -1,11 +1,10 @@
 {
   lib,
   pkgsUtils,
-  types,
 }:
 let
   utils = import ./utils.nix;
-  inherit (types) packageScopeType;
+  types = import ./types.nix { inherit lib; };
 
   toWrapped = path: "${dirOf path}/.${baseNameOf path}-wrapped";
 
@@ -64,7 +63,7 @@ let
             description = "Package name regexp (mutually exclusive with value, requires path).";
           };
           scope = lib.mkOption {
-            type = lib.types.nullOr packageScopeType;
+            type = lib.types.nullOr types.packageScope;
             default = null;
             description = "Override defaultPackageScope for this rule.";
           };

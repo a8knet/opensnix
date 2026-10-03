@@ -35,7 +35,7 @@ in
     };
 
     defaultPackageScope = lib.mkOption {
-      type = opensnixLib.packageScopeType;
+      type = opensnixLib.types.packageScope;
       default = "exact";
       description = ''
         Default package resolution scope. Can be overridden per-rule with
@@ -47,7 +47,7 @@ in
     };
 
     timestamp = lib.mkOption {
-      type = opensnixLib.timestampType;
+      type = opensnixLib.types.timestamp;
       default = opensnixLib.utils.flakeDateToRfc3339 self.lastModifiedDate;
       description = ''
         Timestamp used for the `created`/`updated` fields of every rule.
