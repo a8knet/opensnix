@@ -300,27 +300,46 @@ let
     '';
   };
 
-  # Typed schema for one rule entry: either a bare fragment, or wrapped in
-  # `allow` / `deny` (each a fragment), with the default action applied when
-  # neither wrapper is present.
-  ruleType = lib.types.submodule {
-    options = {
-      allow = lib.mkOption {
-        type = lib.types.nullOr conditionsTypeWithArrays;
+  # Shared option set for rule entries: the `allow`/`deny` wrappers, the
+  # internally managed `precedence`, every condition key, and the array
+  # expansion fields.
+  ruleOptions = {
+    allow = lib.mkOption {
+      type = lib.types.nullOr conditionsTypeWithArrays;
+      default = null;
+      description = "Wrap a fragment with the 'allow' action.";
+    };
+    deny = lib.mkOption {
+      type = lib.types.nullOr conditionsTypeWithArrays;
+      default = null;
+      description = "Wrap a fragment with the 'deny' action.";
+    };
+    precedence = precedenceOption;
+  }
+  // conditionsOptions
+  // arrayOptions
+  // {
+    package = packageOption;
+  };
+
+  # Typed schema for a top-level `opensnix.rules` entry: either a leaf rule
+  # (bare fragment, or wrapped in `allow` / `deny`), or a group carrying
+  # shared defaults plus a nested attrset of child rules. The type is
+  # self-referential: child entries may themselves be groups, so grouping
+  # nests to unlimited depth, while remaining fully typed at every level.
+  groupedRuleType = lib.types.submodule {
+    options = ruleOptions // {
+      rules = lib.mkOption {
+        type = lib.types.nullOr (lib.types.attrsOf groupedRuleType);
         default = null;
-        description = "Wrap a fragment with the 'allow' action.";
+        description = ''
+          Turn this entry into a group. Its condition fields, `allow`/`deny`
+          wrapper, and `precedence` are inherited by every child rule (child
+          values win); generated rules are named `<group>-<child>`. Children
+          may nest further groups. Setting `rules` to an empty attrset is an
+          error.
+        '';
       };
-      deny = lib.mkOption {
-        type = lib.types.nullOr conditionsTypeWithArrays;
-        default = null;
-        description = "Wrap a fragment with the 'deny' action.";
-      };
-      precedence = precedenceOption;
-    }
-    // conditionsOptions
-    // arrayOptions
-    // {
-      package = packageOption;
     };
   };
 
@@ -519,6 +538,10 @@ let
   #   - a bare single-condition fragment  -> action taken from defaultAction
   #   - { allow = <fragment> } -> action = "allow"
   #   - { deny  = <fragment> } -> action = "deny"
+  #   - a group: any of the above plus `rules = { <child> = <entry>; }`; the
+  #     group is a pure defaults container (no rule is emitted for the group
+  #     itself) and yields one rule per leaf named `<group>-<child>-...`.
+  #     Groups nest to unlimited depth.
   mkRules =
     {
       defaultAction,
@@ -529,6 +552,8 @@ let
     let
       # Resolve the actual condition fragment and action for an entry, handling
       # the `allow`/`deny` wrappers and the typed schema's null defaults.
+      # `action` is null when no explicit wrapper is present, so group children
+      # can fall back to the group wrapper and only then to `defaultAction`.
       resolve =
         entry:
         let
@@ -551,8 +576,9 @@ let
                   "allow"
                   "deny"
                   "precedence"
+                  "rules"
                 ];
-                action = defaultAction;
+                action = null;
               };
         in
         wrapped
@@ -560,6 +586,49 @@ let
           inherit (entry) precedence;
           fragment = lib.filterAttrs (_: v: v != null) wrapped.fragment;
         };
+
+      # Merge a group fragment with a child fragment; child values win.
+      # `package` is special-cased: submodule defaults (`null` and `false`)
+      # in the child are dropped before merging so that partial overrides
+      # such as group `package.regexp` + child `package.path` combine.
+      mergeFragments =
+        parent: child:
+        let
+          bothPackages = (parent.package or null != null) && (child.package or null != null);
+          childPackage = lib.filterAttrs (_: v: v != null && v != false) child.package;
+        in
+        lib.recursiveUpdate parent (if bothPackages then child // { package = childPackage; } else child);
+
+      # Neutral ancestor context for top-level entries.
+      emptyInherited = {
+        fragment = { };
+        action = null;
+        precedence = null;
+      };
+
+      # Recursively expand one entry into rule records, threading the merged
+      # fragment, action, and precedence inherited from ancestor groups down
+      # to every leaf. Plain entries yield themselves; groups (non-null
+      # `rules`) yield one record set per child, named `<group>-<child>`.
+      expandEntry =
+        inherited: name: entry:
+        let
+          r = resolve entry;
+          node = {
+            inherit name;
+            fragment = mergeFragments inherited.fragment r.fragment;
+            action = if r.action != null then r.action else inherited.action;
+            precedence = if r.precedence != null then r.precedence else inherited.precedence;
+          };
+        in
+        if entry.rules or null == null then
+          [ node ]
+        else if entry.rules == { } then
+          builtins.throw "opensnix: group '${name}' has an empty 'rules' attrset; add at least one child rule or remove the group."
+        else
+          lib.concatLists (
+            lib.mapAttrsToList (childName: expandEntry node "${name}-${childName}") entry.rules
+          );
 
       expandArrays =
         name: r:
@@ -608,13 +677,18 @@ let
       expandedEntries = lib.concatLists (
         lib.mapAttrsToList (
           name: entry:
-          let
-            r = resolve entry;
-            rWithPackage = r // {
-              fragment = resolvePackage name r.fragment defaultPackageScope;
-            };
-          in
-          expandArrays name rWithPackage
+          lib.concatLists (
+            map (
+              r:
+              expandArrays r.name (
+                r
+                // {
+                  fragment = resolvePackage r.name r.fragment defaultPackageScope;
+                  action = if r.action != null then r.action else defaultAction;
+                }
+              )
+            ) (expandEntry emptyInherited name entry)
+          )
         ) rules
       );
 
@@ -638,6 +712,6 @@ in
 {
   inherit
     mkRules
-    ruleType
+    groupedRuleType
     ;
 }

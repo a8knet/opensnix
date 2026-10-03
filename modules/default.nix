@@ -61,14 +61,21 @@ in
     };
 
     rules = lib.mkOption {
-      type = lib.types.attrsOf opensnixLib.ruleType;
+      type = lib.types.attrsOf opensnixLib.groupedRuleType;
       default = { };
       description = ''
         OpenSnitch rules. Each attribute name is the rule identifier; its
         value is either a bare fragment, an attrset with an `allow` subkey,
         or an attrset with a `deny` subkey wrapping the fragment. A fragment
-        carries one or more condition keys (see `opensnixLib.ruleType` for the
-        full typed schema).
+        carries one or more condition keys (see `opensnixLib.groupedRuleType`
+        for the full typed schema).
+
+        An entry that additionally sets `rules` to an attrset of child rules
+        becomes a group: the group's condition fields, `allow`/`deny` wrapper,
+        and `precedence` are inherited by every child (child values win), and
+        the generated rules are named `<group>-<child>`. Groups avoid
+        repeating shared conditions such as `userName` across many rules.
+        Children may nest further groups (unlimited depth).
       '';
     };
   };
