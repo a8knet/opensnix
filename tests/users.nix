@@ -11,7 +11,7 @@
       };
     };
     expected = {
-      "foo-user-bob" = {
+      opensnix-foo-user-bob = {
         name = "opensnix-foo-user-bob";
         action = "allow";
         operator = {
@@ -36,7 +36,7 @@
           ];
         };
       };
-      "foo-user-alice" = {
+      opensnix-foo-user-alice = {
         name = "opensnix-foo-user-alice";
         action = "allow";
         operator = {
@@ -71,7 +71,7 @@
       };
     };
     expected = {
-      "foo-user-bob" = {
+      opensnix-foo-user-bob = {
         name = "opensnix-foo-user-bob";
         action = "allow";
         operator = {
@@ -93,7 +93,7 @@
       };
     };
     expected = {
-      "foo-userId-1000" = {
+      opensnix-foo-userId-1000 = {
         name = "opensnix-foo-userId-1000";
         action = "allow";
         operator = {
@@ -102,7 +102,7 @@
           data = "1000";
         };
       };
-      "foo-userId-1001" = {
+      opensnix-foo-userId-1001 = {
         name = "opensnix-foo-userId-1001";
         action = "allow";
         operator = {
@@ -141,7 +141,7 @@
       };
     };
     expected = {
-      "foo-user-bob" = {
+      opensnix-foo-user-bob = {
         name = "opensnix-foo-user-bob";
         action = "allow";
         operator = {
@@ -171,7 +171,7 @@
       };
     };
     expected = {
-      "foo-user-bob" = {
+      opensnix-foo-user-bob = {
         name = "opensnix-foo-user-bob";
         action = "deny";
         operator = {
@@ -197,7 +197,7 @@
 
   collisionBetweenRules = {
     expr = {
-      "foo-user-bob" = {
+      foo-user-bob = {
         host = "example.com";
       };
       foo = {

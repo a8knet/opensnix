@@ -6,7 +6,7 @@
       };
     };
     expected = {
-      foo = {
+      opensnix-foo = {
         name = "opensnix-foo";
         action = "allow";
         operator = {

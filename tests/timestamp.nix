@@ -9,7 +9,7 @@
     lastModifiedDate = "20261002183107";
     expectedTs = "2026-10-02T18:31:07Z";
     expected = {
-      foo = {
+      opensnix-foo = {
         name = "opensnix-foo";
         action = "allow";
         operator = {
@@ -29,7 +29,7 @@
     };
     timestamp = "2026-10-02T18:31:07Z";
     expected = {
-      foo = {
+      opensnix-foo = {
         name = "opensnix-foo";
         action = "allow";
         operator = {

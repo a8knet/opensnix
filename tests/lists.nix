@@ -9,7 +9,7 @@
       };
     };
     expected = {
-      foo = {
+      opensnix-foo = {
         action = "allow";
         name = "opensnix-foo";
         operator = {
@@ -33,7 +33,7 @@
       };
     };
     expected = {
-      foo = {
+      opensnix-foo = {
         action = "allow";
         name = "opensnix-foo";
         operator = {
@@ -56,7 +56,7 @@
       };
     };
     expected = {
-      foo = {
+      opensnix-foo = {
         action = "allow";
         name = "opensnix-foo";
         operator = {
@@ -101,7 +101,7 @@
       };
     };
     expected = {
-      foo = {
+      opensnix-foo = {
         action = "allow";
         name = "opensnix-foo";
         operator = {
@@ -125,7 +125,7 @@
       };
     };
     expected = {
-      foo = {
+      opensnix-foo = {
         action = "allow";
         name = "opensnix-foo";
         operator = {
@@ -178,7 +178,7 @@
       };
     };
     expected = {
-      foo = {
+      opensnix-foo = {
         action = "allow";
         name = "opensnix-foo";
         operator = {
@@ -204,7 +204,7 @@
       };
     };
     expected = {
-      foo = {
+      opensnix-foo = {
         action = "allow";
         name = "opensnix-foo";
         operator = {
@@ -249,7 +249,7 @@
       };
     };
     expected = {
-      foo = {
+      opensnix-foo = {
         action = "allow";
         name = "opensnix-foo";
         operator = {
@@ -274,7 +274,7 @@
       };
     };
     expected = {
-      foo = {
+      opensnix-foo = {
         action = "allow";
         name = "opensnix-foo";
         operator = {
@@ -317,7 +317,7 @@
       };
     };
     expected = {
-      foo = {
+      opensnix-foo = {
         action = "deny";
         name = "opensnix-foo";
         operator = {
@@ -341,7 +341,7 @@
       };
     };
     expected = {
-      foo = {
+      opensnix-foo = {
         action = "allow";
         name = "opensnix-foo";
         operator = {

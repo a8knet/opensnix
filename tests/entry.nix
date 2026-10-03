@@ -6,7 +6,7 @@
       };
     };
     expected = {
-      bar = {
+      opensnix-bar = {
         name = "opensnix-bar";
         action = "allow";
         operator = {
@@ -25,7 +25,7 @@
       };
     };
     expected = {
-      baz = {
+      opensnix-baz = {
         name = "opensnix-baz";
         action = "deny";
         operator = {
@@ -45,7 +45,7 @@
       };
     };
     expected = {
-      foo = {
+      opensnix-foo = {
         name = "opensnix-foo";
         action = "deny";
         operator = {

@@ -606,7 +606,13 @@ let
       throw "opensnix: duplicate rule name '${builtins.head (lib.attrNames dups)}' generated; check for duplicate values in array fields or conflicting rule names."
     else
       builtins.listToAttrs (
-        map (e: lib.nameValuePair e.name (mkRule e.name e.action timestamp e.fragment)) expandedEntries
+        map (
+          e:
+          let
+            rule = mkRule e.name e.action timestamp e.fragment;
+          in
+          lib.nameValuePair rule.name rule
+        ) expandedEntries
       );
 in
 {
