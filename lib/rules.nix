@@ -288,6 +288,18 @@ let
     options = conditionsOptions // arrayOptions // { package = packageOption; };
   };
 
+  precedenceOption = lib.mkOption {
+    type = lib.types.nullOr lib.types.bool;
+    default = null;
+    description = ''
+      OpenSnitch rule precedence ("Priority rule"). When `true`, a matching
+      rule short-circuits evaluation immediately, so an `allow` rule with
+      precedence wins over any later matching `deny`. When `null` (default),
+      the field is omitted from the generated JSON. Has no additional effect
+      on `deny`/`reject` rules, which already short-circuit.
+    '';
+  };
+
   # Typed schema for one rule entry: either a bare fragment, or wrapped in
   # `allow` / `deny` (each a fragment), with the default action applied when
   # neither wrapper is present.
@@ -303,6 +315,7 @@ let
         default = null;
         description = "Wrap a fragment with the 'deny' action.";
       };
+      precedence = precedenceOption;
     }
     // conditionsOptions
     // arrayOptions
@@ -380,15 +393,20 @@ let
   # `frag` is the user-provided single-condition fragment; the internally
   # managed fields are always set here and override anything the user might
   # have tried to supply (there is intentionally no generic pass-through).
-  mkRule = name: action: timestamp: frag: {
-    inherit action;
-    created = timestamp;
-    updated = timestamp;
-    name = "opensnix-${name}";
-    enabled = true;
-    duration = "always";
-    operator = mkOperator frag;
-  };
+  mkRule =
+    name: action: precedence: timestamp: frag:
+    {
+      inherit action;
+      created = timestamp;
+      updated = timestamp;
+      name = "opensnix-${name}";
+      enabled = true;
+      duration = "always";
+      operator = mkOperator frag;
+    }
+    // lib.optionalAttrs (precedence != null) {
+      inherit precedence;
+    };
 
   resolvePackageValue =
     frag: pkg:
@@ -532,12 +550,14 @@ let
                 fragment = removeAttrs entry [
                   "allow"
                   "deny"
+                  "precedence"
                 ];
                 action = defaultAction;
               };
         in
         wrapped
         // {
+          inherit (entry) precedence;
           fragment = lib.filterAttrs (_: v: v != null) wrapped.fragment;
         };
 
@@ -565,7 +585,7 @@ let
           [
             {
               inherit name fragment;
-              inherit (r) action;
+              inherit (r) action precedence;
             }
           ]
         else
@@ -582,7 +602,7 @@ let
               fragment = (removeAttrs fragment [ fieldName ]) // {
                 ${spec.conditionKey} = value;
               };
-              inherit (r) action;
+              inherit (r) action precedence;
             }) values;
 
       expandedEntries = lib.concatLists (
@@ -609,7 +629,7 @@ let
         map (
           e:
           let
-            rule = mkRule e.name e.action timestamp e.fragment;
+            rule = mkRule e.name e.action e.precedence timestamp e.fragment;
           in
           lib.nameValuePair rule.name rule
         ) expandedEntries
