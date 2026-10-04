@@ -38,6 +38,9 @@ let
   #   - { value = pkgs.foobar; wrapped = true; } -> toWrapped(realpath(lib.getExe value))
   #   - { value = pkgs.foobar; path = "/bin/foo"; } -> "${lib.getBin value}${path}"
   #   - { regexp = "foo-[0-9]+"; path = "/bin/foo"; } -> regexp pattern
+  #   - Wildcard scope + value: store-directory regexp over the derivation
+  #     name, with a trailing '-wrapped' stripped (the real binaries live in
+  #     the unwrapped package's store directory).
   packageType =
     let
       packageAttrSetType = lib.types.submodule {
@@ -482,7 +485,10 @@ let
         if hasRegexp then
           pkg.regexp
         else if hasValue then
-          lib.escapeRegex pkg.value.name
+          # Derivations named `<base>-<version>-wrapped` contain only wrapper
+          # scripts and symlinks; the running process resolves to the
+          # unwrapped package's store path, so match against that name.
+          lib.escapeRegex (lib.removeSuffix "-wrapped" pkg.value.name)
         else
           builtins.throw "opensnix: rule '${name}' package must specify either 'value' or 'regexp'.";
     in

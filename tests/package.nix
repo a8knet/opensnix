@@ -4,11 +4,11 @@ let
       pname,
       outPath,
       mainProgram ? pname,
+      name ? "${pname}-1.0",
     }:
     {
       type = "derivation";
-      inherit outPath pname;
-      name = "${pname}-1.0";
+      inherit outPath pname name;
       meta = {
         inherit mainProgram;
       };
@@ -30,6 +30,20 @@ let
     pname = "curl";
     outPath = "/nix/store/bbbb-curl";
     mainProgram = "curl";
+  };
+
+  libreoffice = mkMockPkg {
+    pname = "libreoffice";
+    outPath = "/nix/store/cccc-libreoffice-25.8.5.2-wrapped";
+    name = "libreoffice-25.8.5.2-wrapped";
+    mainProgram = "soffice";
+  };
+
+  wayfire = mkMockPkg {
+    pname = "wayfire-wrapped";
+    outPath = "/nix/store/dddd-wayfire-wrapped-0.8.1";
+    name = "wayfire-wrapped-0.8.1";
+    mainProgram = "wayfire";
   };
 in
 {
@@ -266,6 +280,50 @@ in
           type = "regexp";
           operand = "process.path";
           data = "^/nix/store/[a-z0-9]{32}-curl-[0-9]+/.*$";
+        };
+      };
+    };
+  };
+
+  wildcardScopeStripsWrappedSuffix = {
+    expr = {
+      foo = {
+        package = {
+          value = libreoffice;
+          scope = "wildcard";
+        };
+      };
+    };
+    expected = {
+      opensnix-foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "regexp";
+          operand = "process.path";
+          data = "^/nix/store/[a-z0-9]{32}-libreoffice-25\\.8\\.5\\.2/.*$";
+        };
+      };
+    };
+  };
+
+  wildcardScopeKeepsNonSuffixWrapped = {
+    expr = {
+      foo = {
+        package = {
+          value = wayfire;
+          scope = "wildcard";
+        };
+      };
+    };
+    expected = {
+      opensnix-foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "regexp";
+          operand = "process.path";
+          data = "^/nix/store/[a-z0-9]{32}-wayfire-wrapped-0\\.8\\.1/.*$";
         };
       };
     };
