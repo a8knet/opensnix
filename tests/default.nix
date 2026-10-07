@@ -45,9 +45,24 @@ let
             { lib, ... }:
             {
               imports = [ ../modules ];
-              options.services.opensnitch.rules = lib.mkOption {
-                type = lib.types.attrs;
-                description = "Stub of the real OpenSnitch module's rules option.";
+              options = {
+                warnings = lib.mkOption {
+                  type = lib.types.listOf lib.types.str;
+                  internal = true;
+                  default = [ ];
+                  description = "Stub of the NixOS top-level warnings option.";
+                };
+                services.opensnitch = {
+                  enable = lib.mkOption {
+                    type = lib.types.bool;
+                    default = true;
+                    description = "Stub of the real OpenSnitch module's enable option.";
+                  };
+                  rules = lib.mkOption {
+                    type = lib.types.attrs;
+                    description = "Stub of the real OpenSnitch module's rules option.";
+                  };
+                };
               };
               config = {
                 _module.args.self = {
@@ -56,6 +71,7 @@ let
                   };
                   lastModifiedDate = t.lastModifiedDate or ts;
                 };
+                services.opensnitch.enable = t.opensnitchServiceEnable or true;
                 opensnix = {
                   enable = lib.mkForce true;
                   defaultAction = t.defaultAction or "allow";
@@ -69,7 +85,20 @@ let
           )
         ];
       };
-      rules = eval.config.services.opensnitch.rules;
+      warnings = eval.config.warnings;
+      warningCheck =
+        if !(t ? expectedWarnings) then
+          true
+        else if t.expectedWarnings == [ ] then
+          lib.assertMsg (warnings == [ ]) "unexpected warnings: ${lib.generators.toPretty { } warnings}"
+        else
+          lib.assertMsg (lib.all (w: lib.any (lib.strings.hasInfix w) warnings) t.expectedWarnings)
+            "expected a warning matching one of ${lib.generators.toPretty { } t.expectedWarnings}, got ${
+              lib.generators.toPretty { } warnings
+            }";
+      rules = lib.showWarnings warnings (
+        if warningCheck then eval.config.services.opensnitch.rules else null
+      );
     in
     if t ? expectedError then
       {

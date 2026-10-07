@@ -85,6 +85,14 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    warnings = lib.optionals (!config.services.opensnitch.enable) [
+      ''
+        opensnix.enable is true but services.opensnitch.enable is false: opensnix
+        only populates services.opensnitch.rules, and the OpenSnitch module
+        ignores that option unless its service is enabled.
+      ''
+    ];
+
     services.opensnitch.rules = rendered;
   };
 }
