@@ -42,3 +42,7 @@ Linting is enforced by `nix flake check`. To run only the linter locally:
 ```sh
 nix build .#checks.x86_64-linux.lint
 ```
+
+## License
+
+Distributed under the MIT License. See [LICENSE](LICENSE) for the full text.
