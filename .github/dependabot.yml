@@ -6,8 +6,7 @@ updates:
       interval: weekly
       day: monday
     commit-message:
-      prefix: chore
-      include: scope
+      prefix: chore(flake)
     groups:
       flake-inputs:
         patterns:
