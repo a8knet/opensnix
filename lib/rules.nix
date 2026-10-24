@@ -9,7 +9,10 @@ let
   toWrapped = path: "${dirOf path}/.${baseNameOf path}-wrapped";
 
   # String type that rejects leading '^' or trailing '$' anchors, since the
-  # wrapper automatically adds them for regexp conditions.
+  # wrapper adds '^(?:<pattern>)$' around the pattern. The group is essential: RE2
+  # binds alternation looser than anchors, so bare ^80|443$ parses as
+  # (^80)|(443$) and would match 8080 or 1443; ^(?:80|443)$ matches only
+  # 80 or 443.
   regexpStrType =
     lib.types.addCheck lib.types.str (v: !(lib.hasPrefix "^" v || lib.hasSuffix "$" v))
     // {
@@ -28,7 +31,7 @@ let
     regexpElementType = regexpStrType;
     regexpOperand = "lists.domains_regexp";
     regexpFileName = "domains_regexp.list";
-    regexpFormat = values: lib.concatStringsSep "\n" (map (d: "^${d}$") values);
+    regexpFormat = values: lib.concatStringsSep "\n" (map (d: "^(?:${d})$") values);
   };
 
   # Package specification: either a bare package or an attrset with options.
@@ -385,7 +388,7 @@ let
       {
         type = if isRegexp then "regexp" else spec.type;
         inherit (spec) operand;
-        data = if isRegexp then "^" + (builtins.toString value) + "$" else builtins.toString value;
+        data = if isRegexp then "^(?:${builtins.toString value})$" else builtins.toString value;
       };
 
   # Build the operator for a rule fragment.
@@ -470,7 +473,7 @@ let
       removeAttrs frag [ "package" ]
       // {
         processPath = {
-          regexp = "/nix/store/[a-z0-9]{32}-${pkg.regexp}${pkg.path}";
+          regexp = "/nix/store/[a-z0-9]{32}-(?:${pkg.regexp})${lib.escapeRegex pkg.path}";
         };
       };
 
@@ -500,7 +503,7 @@ let
       removeAttrs frag [ "package" ]
       // {
         processPath = {
-          regexp = "/nix/store/[a-z0-9]{32}-${pattern}/.*";
+          regexp = "/nix/store/[a-z0-9]{32}-(?:${pattern})/.*";
         };
       };
 

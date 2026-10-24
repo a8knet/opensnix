@@ -110,8 +110,8 @@
           data = {
             name = "domains_regexp.list";
             content = ''
-              ^.*example[.]com$
-              ^sub[.]example[.]org$'';
+              ^(?:.*example[.]com)$
+              ^(?:sub[.]example[.]org)$'';
           };
         };
       };
@@ -133,7 +133,7 @@
           operand = "lists.domains_regexp";
           data = {
             name = "domains_regexp.list";
-            content = "^.*example[.]com$";
+            content = "^(?:.*example[.]com)$";
           };
         };
       };
