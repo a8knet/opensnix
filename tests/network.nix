@@ -37,25 +37,6 @@
     };
   };
 
-  src = {
-    expr = {
-      foo = {
-        srcNetwork = "10.0.0.0/8";
-      };
-    };
-    expected = {
-      opensnix-foo = {
-        name = "opensnix-foo";
-        action = "allow";
-        operator = {
-          type = "network";
-          operand = "source.network";
-          data = "10.0.0.0/8";
-        };
-      };
-    };
-  };
-
   aliasLan = {
     expr = {
       foo = {
@@ -94,25 +75,6 @@
     };
   };
 
-  aliasSrc = {
-    expr = {
-      foo = {
-        srcNetwork = "LAN";
-      };
-    };
-    expected = {
-      opensnix-foo = {
-        name = "opensnix-foo";
-        action = "allow";
-        operator = {
-          type = "network";
-          operand = "source.network";
-          data = "LAN";
-        };
-      };
-    };
-  };
-
   regexpRejected = {
     expr = {
       foo = {
@@ -129,14 +91,5 @@
       };
     };
     expectedError.msg = "dstNetwork' is not of type";
-  };
-
-  srcRegexpRejected = {
-    expr = {
-      foo = {
-        srcNetwork.regexp = "10\\..*";
-      };
-    };
-    expectedError.msg = "srcNetwork' is not of type";
   };
 }

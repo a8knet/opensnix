@@ -165,10 +165,6 @@ let
       type = "network";
       operand = "dest.network";
     };
-    srcNetwork = {
-      type = "network";
-      operand = "source.network";
-    };
 
     proto = {
       type = "simple";
