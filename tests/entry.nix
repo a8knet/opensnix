@@ -96,4 +96,22 @@
     };
     expectedError.msg = "must contain at least one condition";
   };
+
+  nameWithSlash = {
+    expr = {
+      "foo/bar" = {
+        network = "10.0.0.0/8";
+      };
+    };
+    expectedError.msg = "invalid rule name 'foo/bar'";
+  };
+
+  arrayValueWithSlash = {
+    expr = {
+      foo = {
+        users = [ "a/b" ];
+      };
+    };
+    expectedError.msg = "invalid rule name 'foo-user-a/b'";
+  };
 }

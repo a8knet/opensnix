@@ -698,9 +698,12 @@ let
       );
 
       dups = lib.filterAttrs (_: vs: builtins.length vs > 1) (lib.groupBy (e: e.name) expandedEntries);
+      invalidNames = lib.filter (n: !utils.isValidRuleName n) (map (e: e.name) expandedEntries);
     in
     if !utils.isRfc3339UTC timestamp then
       builtins.throw "opensnix: timestamp '${timestamp}' is not a valid RFC3339 UTC date-time (expected YYYY-MM-DDTHH:MM:SSZ)."
+    else if invalidNames != [ ] then
+      builtins.throw "opensnix: invalid rule name '${builtins.head invalidNames}'; rule names must start with an alphanumeric character and may only contain [A-Za-z0-9._-]."
     else if dups != { } then
       throw "opensnix: duplicate rule name '${builtins.head (lib.attrNames dups)}' generated; check for duplicate values in array fields or conflicting rule names."
     else

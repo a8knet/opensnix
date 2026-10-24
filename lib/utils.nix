@@ -7,6 +7,12 @@ in
   # Whether the given string is a valid RFC3339 UTC date-time.
   isRfc3339UTC = s: builtins.isString s && builtins.match rfc3339UTCRegexp s != null;
 
+  # Whether the given string is a safe identifier for a generated rule name:
+  # starts with an alphanumeric character, then alphanumerics, '.', '_' or
+  # '-'. Rejects '/' and other characters that would break the nixpkgs
+  # opensnitch module's preStart `ln -sf` into Rules.Path.
+  isValidRuleName = s: builtins.isString s && builtins.match "[A-Za-z0-9][A-Za-z0-9._-]*" s != null;
+
   # Convert a flake `lastModifiedDate` (YYYYMMDDHHMMSS) into an RFC3339 UTC
   # timestamp. Any other value is passed through unchanged so that
   # `timestamp` reports it as invalid.
