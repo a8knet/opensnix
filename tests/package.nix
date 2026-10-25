@@ -1,24 +1,5 @@
 let
-  mkMockPkg =
-    {
-      pname,
-      outPath,
-      mainProgram ? pname,
-      name ? "${pname}-1.0",
-    }:
-    {
-      type = "derivation";
-      inherit outPath pname name;
-      meta = {
-        inherit mainProgram;
-      };
-      bin = {
-        inherit outPath pname;
-        meta = {
-          inherit mainProgram;
-        };
-      };
-    };
+  mkMockPkg = import ./fixtures/mk-mock-pkg.nix;
 
   firefox = mkMockPkg {
     pname = "firefox";

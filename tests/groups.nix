@@ -1,3 +1,11 @@
+let
+  mkMockPkg = import ./fixtures/mk-mock-pkg.nix;
+
+  firefox = mkMockPkg {
+    pname = "firefox";
+    outPath = "/nix/store/aaaa-firefox";
+  };
+in
 {
   groupSharedUserName = {
     expr = {
@@ -528,5 +536,64 @@
       };
     };
     expectedError.msg = "duplicate rule name 'g-web'";
+  };
+
+  groupChildOverridesWrapped = {
+    expr = {
+      browsers = {
+        package = {
+          value = firefox;
+          wrapped = true;
+        };
+        rules = {
+          bare.package.wrapped = false;
+        };
+      };
+    };
+    expected = {
+      opensnix-browsers-bare = {
+        name = "opensnix-browsers-bare";
+        action = "allow";
+        operator = {
+          type = "simple";
+          operand = "process.path";
+          data = "/nix/store/aaaa-firefox/bin/firefox";
+        };
+      };
+    };
+  };
+
+  groupChildInheritsWrapped = {
+    expr = {
+      browsers = {
+        package = {
+          value = firefox;
+          wrapped = true;
+        };
+        rules.web.host = "example.com";
+      };
+    };
+    expected = {
+      opensnix-browsers-web = {
+        name = "opensnix-browsers-web";
+        action = "allow";
+        operator = {
+          type = "list";
+          operand = "list";
+          list = [
+            {
+              type = "simple";
+              operand = "dest.host";
+              data = "example.com";
+            }
+            {
+              type = "simple";
+              operand = "process.path";
+              data = "/nix/store/aaaa-firefox/bin/.firefox-wrapped";
+            }
+          ];
+        };
+      };
+    };
   };
 }

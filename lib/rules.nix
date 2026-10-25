@@ -54,9 +54,9 @@ let
             description = "Package to resolve (mutually exclusive with regexp).";
           };
           wrapped = lib.mkOption {
-            type = lib.types.bool;
-            default = false;
-            description = "Apply toWrapped transformation (requires value, incompatible with path).";
+            type = lib.types.nullOr lib.types.bool;
+            default = null;
+            description = "Apply toWrapped transformation (requires value, incompatible with path). null inherits from the enclosing group; an explicit false overrides a group's true.";
           };
           path = lib.mkOption {
             type = lib.types.nullOr lib.types.str;
@@ -71,7 +71,7 @@ let
           scope = lib.mkOption {
             type = lib.types.nullOr types.packageScope;
             default = null;
-            description = "Override defaultPackageScope for this rule.";
+            description = "Override defaultPackageScope for this rule. null inherits from the group or defaultPackageScope; to undo a group's scope set an explicit value.";
           };
         };
       };
@@ -447,7 +447,7 @@ let
   resolvePackageValueOrWrapped =
     name: frag: pkg:
     let
-      hasWrapped = pkg.wrapped or false;
+      hasWrapped = (pkg.wrapped or false) == true;
       hasPath = pkg.path or null != null;
     in
     if hasWrapped && hasPath then
@@ -479,7 +479,7 @@ let
     name: frag: pkg:
     let
       hasPath = pkg.path or null != null;
-      hasWrapped = pkg.wrapped or false;
+      hasWrapped = (pkg.wrapped or false) == true;
       hasRegexp = pkg ? regexp && pkg.regexp != null;
       hasValue = pkg ? value && pkg.value != null;
       pattern =
@@ -595,14 +595,15 @@ let
         };
 
       # Merge a group fragment with a child fragment; child values win.
-      # `package` is special-cased: submodule defaults (`null` and `false`)
-      # in the child are dropped before merging so that partial overrides
-      # such as group `package.regexp` + child `package.path` combine.
+      # `package` is special-cased: unset submodule fields (`null`) are
+      # dropped before merging so partial overrides such as group
+      # `package.regexp` + child `package.path` combine, while explicitly
+      # set fields (including `wrapped = false`) override the group value.
       mergeFragments =
         parent: child:
         let
           bothPackages = (parent.package or null != null) && (child.package or null != null);
-          childPackage = lib.filterAttrs (_: v: v != null && v != false) child.package;
+          childPackage = lib.filterAttrs (_: v: v != null) child.package;
         in
         lib.recursiveUpdate parent (if bothPackages then child // { package = childPackage; } else child);
 
