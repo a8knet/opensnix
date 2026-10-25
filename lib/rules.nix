@@ -92,38 +92,38 @@ let
     port = {
       type = "simple";
       operand = "dest.port";
-      valueType = lib.types.int;
+      valueType = lib.types.ints.u16;
       regexpType = regexpStrType;
     };
     dstPort = {
       type = "simple";
       operand = "dest.port";
-      valueType = lib.types.int;
+      valueType = lib.types.ints.u16;
       regexpType = regexpStrType;
     };
     srcPort = {
       type = "simple";
       operand = "source.port";
-      valueType = lib.types.int;
+      valueType = lib.types.ints.u16;
       regexpType = regexpStrType;
     };
 
     ports = {
       type = "regexp";
       operand = "dest.port";
-      valueType = lib.types.listOf lib.types.int;
+      valueType = lib.types.listOf lib.types.ints.u16;
       inherit listToRegexp;
     };
     dstPorts = {
       type = "regexp";
       operand = "dest.port";
-      valueType = lib.types.listOf lib.types.int;
+      valueType = lib.types.listOf lib.types.ints.u16;
       inherit listToRegexp;
     };
     srcPorts = {
       type = "regexp";
       operand = "source.port";
-      valueType = lib.types.listOf lib.types.int;
+      valueType = lib.types.listOf lib.types.ints.u16;
       inherit listToRegexp;
     };
 
@@ -138,7 +138,7 @@ let
     userId = {
       type = "simple";
       operand = "user.id";
-      valueType = lib.types.int;
+      valueType = lib.types.ints.unsigned;
     };
 
     ip = {
@@ -169,6 +169,7 @@ let
     proto = {
       type = "simple";
       operand = "protocol";
+      valueType = types.protocol;
     };
 
     processPath = {
@@ -229,8 +230,9 @@ let
   # Typed option attrs for a single rule fragment, derived from `conditionMap`
   # so the set of condition keys and their Nix value types live in exactly one
   # place. A spec without `valueType` defaults to a string; numeric conditions
-  # declare `valueType = lib.types.int`. Conditions with `regexpType` support
-  # `{ regexp = "..."; }` syntax.
+  # declare a range-checked type (ports: `lib.types.ints.u16`, user ids:
+  # `lib.types.ints.unsigned`, protocol: `types.protocol`). Conditions with
+  # `regexpType` support `{ regexp = "..."; }` syntax.
   conditionsOptions = lib.mapAttrs (
     _: spec:
     let

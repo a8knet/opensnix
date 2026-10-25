@@ -85,6 +85,18 @@
     };
   };
 
+  negativeElement = {
+    expr = {
+      foo = {
+        ports = [
+          80
+          (-1)
+        ];
+      };
+    };
+    expectedError.msg = "16 bit unsigned integer";
+  };
+
   emptyError = {
     expr = {
       foo = {

@@ -64,4 +64,13 @@
     };
     expectedError.msg = "not of type.*signed integer";
   };
+
+  negativeUserId = {
+    expr = {
+      foo = {
+        userId = -1;
+      };
+    };
+    expectedError.msg = "unsigned integer";
+  };
 }

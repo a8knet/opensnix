@@ -157,4 +157,22 @@
     };
     expectedError.msg = "trailing";
   };
+
+  negativePort = {
+    expr = {
+      foo = {
+        port = -1;
+      };
+    };
+    expectedError.msg = "16 bit unsigned integer";
+  };
+
+  oversizedPort = {
+    expr = {
+      foo = {
+        port = 70000;
+      };
+    };
+    expectedError.msg = "16 bit unsigned integer";
+  };
 }
