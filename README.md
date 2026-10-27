@@ -122,7 +122,7 @@ and `port` variants, `processPath`, `processCommand`, and the `domains` and
 ## Running tests
 
 Unit tests use [nix-unit](https://github.com/nix-community/nix-unit) and live
-in the `tests/` directory.
+in the `tests/unit/` directory.
 
 ```sh
 nix flake check
@@ -130,13 +130,13 @@ nix flake check
 
 ### How the tests are organized
 
-Tests are pure-data suites under `tests/` — one `*.nix` file per group of
+Tests are pure-data suites under `tests/unit/` — one `*.nix` file per group of
 related cases, each entry a `{ expr, expected }` pair. `expr` is the raw opensnix
 rules; `expected` is the OpenSnitch rule body minus the invariant `base` fields.
-`tests/default.nix` auto-discovers every `*.nix` under `tests/` (except itself),
-wraps `expr` with `mkRules`, merges `expected` with `base`, and namespaces each
-test as `test-<suite>-<key>`. A test may set `defaultAction` (default `"allow"`)
-for rules that don't specify `allow`/`deny`.
+`tests/unit/default.nix` auto-discovers every `*.nix` under `tests/unit/` (except
+itself), wraps `expr` with `mkRules`, merges `expected` with `base`, and namespaces
+each test as `test-<suite>-<key>`. A test may set `defaultAction` (default
+`"allow"`) for rules that don't specify `allow`/`deny`.
 
 To add a test, drop a `{ expr, expected }` entry into a suite, or add a new
 suite file — both are picked up automatically.

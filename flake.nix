@@ -15,7 +15,7 @@
     {
       lib = {
         default = import ./lib;
-        tests = import ./tests {
+        tests = import ./tests/unit {
           inherit (nixpkgs) lib;
           rules = import ./lib/rules.nix;
         };

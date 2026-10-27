@@ -16,8 +16,8 @@ let
       pkgsUtils = mockPkgsUtils;
     })
     // {
-      types = import ../lib/types.nix { inherit lib; };
-      utils = import ../lib/utils.nix;
+      types = import ../../lib/types.nix { inherit lib; };
+      utils = import ../../lib/utils.nix;
     };
 
   ts = "2026-09-22T00:00:00Z";
@@ -44,7 +44,7 @@ let
           (
             { lib, ... }:
             {
-              imports = [ ../modules ];
+              imports = [ ../../modules ];
               options = {
                 warnings = lib.mkOption {
                   type = lib.types.listOf lib.types.str;
