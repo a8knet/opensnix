@@ -708,7 +708,7 @@ let
     else if invalidNames != [ ] then
       builtins.throw "opensnix: invalid rule name '${builtins.head invalidNames}'; rule names must start with an alphanumeric character and may only contain [A-Za-z0-9._-]."
     else if dups != { } then
-      throw "opensnix: duplicate rule name '${builtins.head (lib.attrNames dups)}' generated; check for duplicate values in array fields or conflicting rule names."
+      builtins.throw "opensnix: duplicate rule name '${builtins.head (lib.attrNames dups)}' generated; check for duplicate values in array fields or conflicting rule names."
     else
       builtins.listToAttrs (
         map (
