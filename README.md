@@ -141,6 +141,17 @@ each test as `test-<suite>-<key>`. A test may set `defaultAction` (default
 To add a test, drop a `{ expr, expected }` entry into a suite, or add a new
 suite file — both are picked up automatically.
 
+### VM smoke test
+
+`tests/vm/` holds NixOS VM tests that boot a real OpenSnitch daemon and
+assert that every rule opensnix renders is deployed and loaded correctly.
+These are deliberately not part of `nix flake check` (they build a disk
+image and need KVM); CI runs them in a separate job. To run one locally:
+
+```sh
+nix build .#vmTests.x86_64-linux.smoke -L
+```
+
 ## Formatting and linting
 
 Formatting uses [nixfmt](https://github.com/NixOS/nixfmt) (the official Nix

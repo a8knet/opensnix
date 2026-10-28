@@ -86,5 +86,12 @@
               '';
         }
       );
+
+      vmTests = forAllSystems (system: {
+        smoke = import ./tests/vm/smoke.nix {
+          inherit self nixpkgs;
+          pkgs = pkgsFor.${system};
+        };
+      });
     };
 }
