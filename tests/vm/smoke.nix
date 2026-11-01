@@ -44,6 +44,14 @@ let
         data = "^(?:80|443|8080)$";
       };
     };
+    opensnix-reject-c2 = {
+      action = "reject";
+      operator = {
+        type = "simple";
+        operand = "dest.port";
+        data = "6667";
+      };
+    };
     opensnix-simple-port = {
       action = "allow";
       operator = {
@@ -119,6 +127,7 @@ nixpkgs.lib.nixos.runTest {
           block-ssh.deny = {
             port = 22;
           };
+          reject-c2.reject.port = 6667;
         };
       };
     };

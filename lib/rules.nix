@@ -351,8 +351,8 @@ let
     '';
   };
 
-  # Shared option set for rule entries: the `allow`/`deny` wrappers, the
-  # internally managed `precedence`, every condition key, and the array
+  # Shared option set for rule entries: the `allow`/`deny`/`reject` wrappers,
+  # the internally managed `precedence`, every condition key, and the array
   # expansion fields.
   ruleOptions = {
     allow = lib.mkOption {
@@ -365,6 +365,11 @@ let
       default = null;
       description = "Wrap a fragment with the 'deny' action.";
     };
+    reject = lib.mkOption {
+      type = lib.types.nullOr conditionsTypeWithArrays;
+      default = null;
+      description = "Wrap a fragment with the 'reject' action.";
+    };
     precedence = precedenceOption;
   }
   // conditionsOptions
@@ -374,7 +379,7 @@ let
   };
 
   # Typed schema for a top-level `opensnix.rules` entry: either a leaf rule
-  # (bare fragment, or wrapped in `allow` / `deny`), or a group carrying
+  # (bare fragment, or wrapped in `allow` / `deny` / `reject`), or a group carrying
   # shared defaults plus a nested attrset of child rules. The type is
   # self-referential: child entries may themselves be groups, so grouping
   # nests to unlimited depth, while remaining fully typed at every level.
@@ -384,7 +389,7 @@ let
         type = lib.types.nullOr (lib.types.attrsOf groupedRuleType);
         default = null;
         description = ''
-          Turn this entry into a group. Its condition fields, `allow`/`deny`
+          Turn this entry into a group. Its condition fields, `allow`/`deny`/`reject`
           wrapper, and `precedence` are inherited by every child rule (child
           values win); generated rules are named `<group>-<child>`. Children
           may nest further groups. Setting `rules` to an empty attrset is an
@@ -590,8 +595,9 @@ let
   #
   # Each entry may be:
   #   - a bare single-condition fragment  -> action taken from defaultAction
-  #   - { allow = <fragment> } -> action = "allow"
-  #   - { deny  = <fragment> } -> action = "deny"
+  #   - { allow  = <fragment> } -> action = "allow"
+  #   - { deny   = <fragment> } -> action = "deny"
+  #   - { reject = <fragment> } -> action = "reject"
   #   - a group: any of the above plus `rules = { <child> = <entry>; }`; the
   #     group is a pure defaults container (no rule is emitted for the group
   #     itself) and yields one rule per leaf named `<group>-<child>-...`.
@@ -605,34 +611,36 @@ let
     }:
     let
       # Resolve the actual condition fragment and action for an entry, handling
-      # the `allow`/`deny` wrappers and the typed schema's null defaults.
+      # the `allow`/`deny`/`reject` wrappers and the typed schema's null
+      # defaults.
       # `action` is null when no explicit wrapper is present, so group children
       # can fall back to the group wrapper and only then to `defaultAction`.
       resolve =
         entry:
         let
+          wrappers = lib.filter (n: entry.${n} != null) [
+            "allow"
+            "deny"
+            "reject"
+          ];
           wrapped =
-            if entry.allow != null && entry.deny != null then
-              builtins.throw "opensnix: a rule cannot specify both 'allow' and 'deny'."
-            else if entry.allow != null then
-              {
-                fragment = entry.allow;
-                action = "allow";
-              }
-            else if entry.deny != null then
-              {
-                fragment = entry.deny;
-                action = "deny";
-              }
-            else
+            if lib.length wrappers > 1 then
+              builtins.throw "opensnix: a rule cannot specify more than one of 'allow', 'deny', 'reject'."
+            else if wrappers == [ ] then
               {
                 fragment = removeAttrs entry [
                   "allow"
                   "deny"
+                  "reject"
                   "precedence"
                   "rules"
                 ];
                 action = null;
+              }
+            else
+              {
+                fragment = entry.${lib.head wrappers};
+                action = lib.head wrappers;
               };
         in
         wrapped

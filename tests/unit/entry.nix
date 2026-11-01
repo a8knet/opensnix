@@ -37,6 +37,25 @@
     };
   };
 
+  reject = {
+    expr = {
+      qux.reject = {
+        port = 53;
+      };
+    };
+    expected = {
+      opensnix-qux = {
+        name = "opensnix-qux";
+        action = "reject";
+        operator = {
+          type = "simple";
+          operand = "dest.port";
+          data = "53";
+        };
+      };
+    };
+  };
+
   defaultDeny = {
     defaultAction = "deny";
     expr = {
@@ -57,13 +76,33 @@
     };
   };
 
+  defaultReject = {
+    defaultAction = "reject";
+    expr = {
+      foo = {
+        host = "example.com";
+      };
+    };
+    expected = {
+      opensnix-foo = {
+        name = "opensnix-foo";
+        action = "reject";
+        operator = {
+          type = "simple";
+          operand = "dest.host";
+          data = "example.com";
+        };
+      };
+    };
+  };
+
   badEnum = {
     expr = {
       foo = {
         host = "example.com";
       };
     };
-    defaultAction = "reject";
+    defaultAction = "block";
     expectedError.msg = "defaultAction";
   };
 
@@ -78,7 +117,21 @@
         };
       };
     };
-    expectedError.msg = "cannot specify both";
+    expectedError.msg = "more than one";
+  };
+
+  allowAndReject = {
+    expr = {
+      foo = {
+        allow = {
+          port = 123;
+        };
+        reject = {
+          user = "x";
+        };
+      };
+    };
+    expectedError.msg = "more than one";
   };
 
   unknownKey = {

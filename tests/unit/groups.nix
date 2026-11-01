@@ -189,6 +189,39 @@ in
     };
   };
 
+  groupRejectInheritance = {
+    expr = {
+      hostile = {
+        reject.host = "c2.example";
+        rules = {
+          beacon.port = 443;
+        };
+      };
+    };
+    expected = {
+      opensnix-hostile-beacon = {
+        name = "opensnix-hostile-beacon";
+        action = "reject";
+        operator = {
+          type = "list";
+          operand = "list";
+          list = [
+            {
+              type = "simple";
+              operand = "dest.host";
+              data = "c2.example";
+            }
+            {
+              type = "simple";
+              operand = "dest.port";
+              data = "443";
+            }
+          ];
+        };
+      };
+    };
+  };
+
   groupPrecedenceInheritance = {
     expr = {
       g = {

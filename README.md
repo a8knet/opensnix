@@ -68,8 +68,10 @@ identifier, and opensnix prefixes generated rule names with `opensnix-`.
 opensnix.rules.lan.network = "10.0.0.0/8";
 ```
 
-An entry with no explicit `allow` or `deny` subkey gets
+An entry with no explicit `allow`, `deny` or `reject` subkey gets
 `opensnix.defaultAction`, which is `"allow"` unless you set it otherwise.
+`deny` drops connections silently; `reject` additionally kills the socket, so
+the application gets an immediate error instead of waiting for a timeout.
 
 #### Package, with wildcard scope
 
@@ -105,7 +107,7 @@ opensnix.rules.systemd-resolved = {
 };
 ```
 
-Setting `rules` makes the entry a group: its conditions, its `allow`/`deny`
+Setting `rules` makes the entry a group: its conditions, its `allow`/`deny`/`reject`
 wrapper and its `precedence` are inherited by every child, with the child
 winning on conflict. The two rules above are generated as
 `opensnix-systemd-resolved-dns` and `opensnix-systemd-resolved-dnssec`, and both
@@ -172,7 +174,7 @@ rules; `expected` is the OpenSnitch rule body minus the invariant `base` fields.
 `tests/unit/default.nix` auto-discovers every `*.nix` under `tests/unit/` (except
 itself), wraps `expr` with `mkRules`, merges `expected` with `base`, and namespaces
 each test as `test-<suite>-<key>`. A test may set `defaultAction` (default
-`"allow"`) for rules that don't specify `allow`/`deny`.
+`"allow"`) for rules that don't specify `allow`/`deny`/`reject`.
 
 To add a test, drop a `{ expr, expected }` entry into a suite, or add a new
 suite file — both are picked up automatically.
