@@ -82,7 +82,10 @@ opensnix.rules.firefox.package = {
 
 `package` turns a Nix package into a process condition. The default scope
 resolves to the package's main executable; `scope = "wildcard"` matches every
-binary inside the package instead.
+binary inside the package instead. Resolving an executable runs `realpath` in a
+build phase (import-from-derivation): evaluating such a rule builds the package
+at eval time. `path` and `scope = "wildcard"` avoid that; they only use the
+store path.
 
 #### Group with inherited children
 
@@ -147,13 +150,21 @@ distinct from the `hosts` alias.
 ## Running tests
 
 Unit tests use [nix-unit](https://github.com/nix-community/nix-unit) and live
-in the `tests/unit/` directory.
+in the `tests/unit/` directory. `checks.shell-realpath`
+(`tests/shell/realpath.nix`) additionally tests the `lib/pkgs-utils.nix` builder
+script directly instead of the unit-test mock.
 
 ```sh
 nix flake check
 ```
 
 ### How the tests are organized
+
+Three categories live under `tests/`: `unit/` — mocked pure-evaluation suites;
+`shell/` — contracts for shell builder scripts, run as flake checks; `vm/` —
+integration against the real opensnitchd daemon. Every `*.nix` file in
+`tests/shell/` becomes a check `shell-<filename>`, taking `{ pkgs, utils }` and
+returning a derivation.
 
 Tests are pure-data suites under `tests/unit/` — one `*.nix` file per group of
 related cases, each entry a `{ expr, expected }` pair. `expr` is the raw opensnix
@@ -186,7 +197,7 @@ formatter, via `nixfmt-tree`), and linting uses
 
 ```sh
 nix fmt            # format every .nix file in the tree
-nix flake check    # runs unit tests and the linter (statix + deadnix)
+nix flake check    # runs unit tests, linter, formatter, and shell checks
 ```
 
 Linting is enforced by `nix flake check`. To run only the linter locally:

@@ -85,6 +85,7 @@
                 touch $out
               '';
         }
+        // import ./tests/shell { inherit pkgs; }
       );
 
       vmTests = forAllSystems (system: {
