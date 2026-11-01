@@ -96,18 +96,18 @@ let
             "expected a warning matching one of ${lib.generators.toPretty { } t.expectedWarnings}, got ${
               lib.generators.toPretty { } warnings
             }";
-      rules = lib.showWarnings warnings (
+      renderedRules = lib.showWarnings warnings (
         if warningCheck then eval.config.services.opensnitch.rules else null
       );
     in
     if t ? expectedError then
       {
         inherit (t) expectedError;
-        expr = rules;
+        expr = renderedRules;
       }
     else
       {
-        expr = rules;
+        expr = renderedRules;
         expected = lib.mapAttrs (_: r: base // r) t.expected;
       };
 
