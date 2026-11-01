@@ -92,7 +92,7 @@ in
             {
               type = "regexp";
               operand = "process.path";
-              data = "^(?:/nix/store/[a-z0-9]{32}-(?:systemd-[0-9]+[.][0-9]+)/lib/systemd/systemd-resolved)$";
+              data = "^(?:/nix/store/[0-9abcdfghijklmnpqrsvwxyz]{32}-(?:systemd-[0-9]+[.][0-9]+)/lib/systemd/systemd-resolved)$";
             }
             {
               type = "simple";
@@ -122,7 +122,7 @@ in
             {
               type = "regexp";
               operand = "process.path";
-              data = "^(?:/nix/store/[a-z0-9]{32}-(?:systemd-[0-9]+[.][0-9]+)/lib/systemd/systemd-resolved)$";
+              data = "^(?:/nix/store/[0-9abcdfghijklmnpqrsvwxyz]{32}-(?:systemd-[0-9]+[.][0-9]+)/lib/systemd/systemd-resolved)$";
             }
             {
               type = "simple";
@@ -293,7 +293,7 @@ in
         operator = {
           type = "regexp";
           operand = "process.path";
-          data = "^(?:/nix/store/[a-z0-9]{32}-(?:foo-[0-9]+)/bin/bar)$";
+          data = "^(?:/nix/store/[0-9abcdfghijklmnpqrsvwxyz]{32}-(?:foo-[0-9]+)/bin/bar)$";
         };
       };
     };

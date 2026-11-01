@@ -6,6 +6,9 @@ let
   utils = import ./utils.nix;
   types = import ./types.nix { inherit lib; };
 
+  # Nix base32 (nix32) hash alphabet: 0-9a-z without e, o, t, u.
+  storeHashClass = "[0-9abcdfghijklmnpqrsvwxyz]{32}";
+
   toWrapped = path: "${dirOf path}/.${baseNameOf path}-wrapped";
 
   # String type that rejects leading '^' or trailing '$' anchors, since the
@@ -523,7 +526,7 @@ let
       removeAttrs frag [ "package" ]
       // {
         processPath = {
-          regexp = "/nix/store/[a-z0-9]{32}-(?:${pkg.regexp})${lib.escapeRegex pkg.path}";
+          regexp = "/nix/store/${storeHashClass}-(?:${pkg.regexp})${lib.escapeRegex pkg.path}";
         };
       };
 
@@ -553,7 +556,7 @@ let
       removeAttrs frag [ "package" ]
       // {
         processPath = {
-          regexp = "/nix/store/[a-z0-9]{32}-(?:${pattern})/.*";
+          regexp = "/nix/store/${storeHashClass}-(?:${pattern})/.*";
         };
       };
 

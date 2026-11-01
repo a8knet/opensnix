@@ -128,7 +128,7 @@ in
         operator = {
           type = "regexp";
           operand = "process.path";
-          data = "^(?:/nix/store/[a-z0-9]{32}-(?:curl-[0-9]+)/bin/curl)$";
+          data = "^(?:/nix/store/[0-9abcdfghijklmnpqrsvwxyz]{32}-(?:curl-[0-9]+)/bin/curl)$";
         };
       };
     };
@@ -238,7 +238,7 @@ in
         operator = {
           type = "regexp";
           operand = "process.path";
-          data = "^(?:/nix/store/[a-z0-9]{32}-(?:firefox-1\\.0)/.*)$";
+          data = "^(?:/nix/store/[0-9abcdfghijklmnpqrsvwxyz]{32}-(?:firefox-1\\.0)/.*)$";
         };
       };
     };
@@ -260,7 +260,7 @@ in
         operator = {
           type = "regexp";
           operand = "process.path";
-          data = "^(?:/nix/store/[a-z0-9]{32}-(?:curl-[0-9]+)/.*)$";
+          data = "^(?:/nix/store/[0-9abcdfghijklmnpqrsvwxyz]{32}-(?:curl-[0-9]+)/.*)$";
         };
       };
     };
@@ -282,7 +282,7 @@ in
         operator = {
           type = "regexp";
           operand = "process.path";
-          data = "^(?:/nix/store/[a-z0-9]{32}-(?:libreoffice-25\\.8\\.5\\.2)/.*)$";
+          data = "^(?:/nix/store/[0-9abcdfghijklmnpqrsvwxyz]{32}-(?:libreoffice-25\\.8\\.5\\.2)/.*)$";
         };
       };
     };
@@ -304,7 +304,7 @@ in
         operator = {
           type = "regexp";
           operand = "process.path";
-          data = "^(?:/nix/store/[a-z0-9]{32}-(?:wayfire-wrapped-0\\.8\\.1)/.*)$";
+          data = "^(?:/nix/store/[0-9abcdfghijklmnpqrsvwxyz]{32}-(?:wayfire-wrapped-0\\.8\\.1)/.*)$";
         };
       };
     };
