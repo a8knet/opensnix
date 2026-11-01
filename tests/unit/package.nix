@@ -3,26 +3,37 @@ let
 
   firefox = mkMockPkg {
     pname = "firefox";
-    outPath = "/nix/store/aaaa-firefox";
+    outPath = "/nix/store/vk5drhp6vl299ivwrwh2xzj6243g17zz-firefox-1.0";
     mainProgram = "firefox";
   };
 
   curl = mkMockPkg {
     pname = "curl";
-    outPath = "/nix/store/bbbb-curl";
+    outPath = "/nix/store/10536wmi6cq4s60qzfiys7w33xjq3hc5-curl-8.22.0";
+    name = "curl-8.22.0";
+    mainProgram = "curl";
+  };
+
+  # Multi-output package: '.name' is the plain derivation name, while the
+  # executables live in the separate 'bin' output's store directory.
+  curlMulti = mkMockPkg {
+    pname = "curl";
+    outPath = "/nix/store/1r8bprz4il0w9igbha6pkkfimy4mwkl9-curl-8.22.0";
+    binOutPath = "/nix/store/zh52w5abnkfrwhcymwpq4ddx87a6y5g3-curl-8.22.0-bin";
+    name = "curl-8.22.0";
     mainProgram = "curl";
   };
 
   libreoffice = mkMockPkg {
     pname = "libreoffice";
-    outPath = "/nix/store/cccc-libreoffice-25.8.5.2-wrapped";
+    outPath = "/nix/store/9gnhh4nf3nawl9g6lws14i3vkk5ky4bq-libreoffice-25.8.5.2-wrapped";
     name = "libreoffice-25.8.5.2-wrapped";
     mainProgram = "soffice";
   };
 
   wayfire = mkMockPkg {
     pname = "wayfire-wrapped";
-    outPath = "/nix/store/dddd-wayfire-wrapped-0.8.1";
+    outPath = "/nix/store/y3fqx697649kqv1a9c0z1jsk4wy2zlqa-wayfire-wrapped-0.8.1";
     name = "wayfire-wrapped-0.8.1";
     mainProgram = "wayfire";
   };
@@ -41,7 +52,7 @@ in
         operator = {
           type = "simple";
           operand = "process.path";
-          data = "/nix/store/aaaa-firefox/bin/firefox";
+          data = "/nix/store/vk5drhp6vl299ivwrwh2xzj6243g17zz-firefox-1.0/bin/firefox";
         };
       };
     };
@@ -62,7 +73,7 @@ in
         operator = {
           type = "simple";
           operand = "process.path";
-          data = "/nix/store/aaaa-firefox/bin/firefox";
+          data = "/nix/store/vk5drhp6vl299ivwrwh2xzj6243g17zz-firefox-1.0/bin/firefox";
         };
       };
     };
@@ -84,7 +95,7 @@ in
         operator = {
           type = "simple";
           operand = "process.path";
-          data = "/nix/store/aaaa-firefox/bin/.firefox-wrapped";
+          data = "/nix/store/vk5drhp6vl299ivwrwh2xzj6243g17zz-firefox-1.0/bin/.firefox-wrapped";
         };
       };
     };
@@ -106,7 +117,7 @@ in
         operator = {
           type = "simple";
           operand = "process.path";
-          data = "/nix/store/bbbb-curl/bin/curl";
+          data = "/nix/store/10536wmi6cq4s60qzfiys7w33xjq3hc5-curl-8.22.0/bin/curl";
         };
       };
     };
@@ -158,7 +169,7 @@ in
             {
               type = "simple";
               operand = "process.path";
-              data = "/nix/store/aaaa-firefox/bin/firefox";
+              data = "/nix/store/vk5drhp6vl299ivwrwh2xzj6243g17zz-firefox-1.0/bin/firefox";
             }
             {
               type = "simple";
@@ -239,6 +250,30 @@ in
           type = "regexp";
           operand = "process.path";
           data = "^(?:/nix/store/[0-9abcdfghijklmnpqrsvwxyz]{32}-(?:firefox-1\\.0)/.*)$";
+        };
+      };
+    };
+  };
+
+  # The store directory, not '.name', decides the pattern: curl's executables
+  # live in the separate 'bin' output's directory.
+  wildcardScopeUsesBinOutput = {
+    expr = {
+      foo = {
+        package = {
+          value = curlMulti;
+          scope = "wildcard";
+        };
+      };
+    };
+    expected = {
+      opensnix-foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "regexp";
+          operand = "process.path";
+          data = "^(?:/nix/store/[0-9abcdfghijklmnpqrsvwxyz]{32}-(?:curl-8\\.22\\.0-bin)/.*)$";
         };
       };
     };

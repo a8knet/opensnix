@@ -43,11 +43,13 @@ in
         `package.scope`.
 
         - `exact`: Resolve to a specific executable path
-        - `wildcard`: Match any executable within the package directory.
-          For a package whose derivation name ends in `-wrapped` (e.g.
-          `libreoffice-25.8.5.2-wrapped`), the suffix is stripped first and
-          the unwrapped package's directory is matched, because the real
-          binaries live there.
+        - `wildcard`: Match any executable within the package's store
+          directory, taken from its `bin` output; a multi-output package keeps
+          executables in a directory suffixed with the output name (e.g.
+          `curl-8.23.0-bin`). For a package whose directory name ends in
+          `-wrapped` (e.g. `libreoffice-25.8.5.2-wrapped`), the suffix is
+          stripped first and the unwrapped package's directory is matched,
+          because the real binaries live there.
       '';
     };
 

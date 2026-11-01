@@ -22,6 +22,12 @@ let
         data = "${pkgs.curl}/bin/curl";
       };
     };
+    opensnix-curl-wildcard = {
+      operator = {
+        type = "regexp";
+        operand = "process.path";
+      };
+    };
     opensnix-hello-wildcard = {
       operator = {
         type = "regexp";
@@ -120,6 +126,12 @@ nixpkgs.lib.nixos.runTest {
             user = "root";
           };
           curl-exact.package = pkgs.curl;
+          # curl is multi-output: its executables live in the store directory
+          # '<name>-bin', which differs from the derivation name.
+          curl-wildcard.package = {
+            value = pkgs.curl;
+            scope = "wildcard";
+          };
           hello-wildcard.package = {
             value = pkgs.hello;
             scope = "wildcard";
@@ -170,10 +182,17 @@ nixpkgs.lib.nixos.runTest {
         loaded = json.loads(smoke.succeed(f"cat {path}"))
         assert matches(loaded, want), f"rule {name} differs: {loaded}"
 
-    # The wildcard regex is only checked for type/operand above; additionally
-    # verify it is a valid regex that matches the real package binary path.
-    wildcard = json.loads(smoke.succeed(f"cat {rules_dir}/opensnix-hello-wildcard.json"))
-    assert re.fullmatch(wildcard["operator"]["data"], "${pkgs.hello}/bin/hello"), wildcard
+    # The wildcard regexps are only checked for type/operand above; additionally
+    # verify each is a valid regex that matches its own package's real binary
+    # path and not the other one's. curl witnesses the multi-output case: its
+    # executables live in '<name>-bin', not in the directory '<name>'.
+    for rule, own, other in (
+        ("opensnix-hello-wildcard", "${pkgs.lib.getExe pkgs.hello}", "${pkgs.lib.getExe pkgs.curl}"),
+        ("opensnix-curl-wildcard", "${pkgs.lib.getExe pkgs.curl}", "${pkgs.lib.getExe pkgs.hello}"),
+    ):
+        data = json.loads(smoke.succeed(f"cat {rules_dir}/{rule}.json"))["operator"]["data"]
+        assert re.fullmatch(data, own), (rule, data)
+        assert not re.fullmatch(data, other), (rule, data)
 
     # Pinned from a live run: the daemon scans the rules directory, and
     # nothing at ERR level or above is logged. Two WAR lines are expected

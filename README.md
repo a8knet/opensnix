@@ -84,7 +84,9 @@ opensnix.rules.firefox.package = {
 
 `package` turns a Nix package into a process condition. The default scope
 resolves to the package's main executable; `scope = "wildcard"` matches every
-binary inside the package instead. Resolving an executable runs `realpath` in a
+binary inside the package instead, anchored at the store directory of the
+package's `bin` output (a multi-output package keeps its executables in a
+directory like `curl-8.23.0-bin`). Resolving an executable runs `realpath` in a
 build phase (import-from-derivation): evaluating such a rule builds the package
 at eval time. `path` and `scope = "wildcard"` avoid that; they only use the
 store path.

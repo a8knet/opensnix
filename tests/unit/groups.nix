@@ -3,7 +3,7 @@ let
 
   firefox = mkMockPkg {
     pname = "firefox";
-    outPath = "/nix/store/aaaa-firefox";
+    outPath = "/nix/store/vk5drhp6vl299ivwrwh2xzj6243g17zz-firefox-1.0";
   };
 in
 {
@@ -590,7 +590,7 @@ in
         operator = {
           type = "simple";
           operand = "process.path";
-          data = "/nix/store/aaaa-firefox/bin/firefox";
+          data = "/nix/store/vk5drhp6vl299ivwrwh2xzj6243g17zz-firefox-1.0/bin/firefox";
         };
       };
     };
@@ -622,7 +622,7 @@ in
             {
               type = "simple";
               operand = "process.path";
-              data = "/nix/store/aaaa-firefox/bin/.firefox-wrapped";
+              data = "/nix/store/vk5drhp6vl299ivwrwh2xzj6243g17zz-firefox-1.0/bin/.firefox-wrapped";
             }
           ];
         };

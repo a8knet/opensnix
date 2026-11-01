@@ -9,6 +9,10 @@ let
   # Nix base32 (nix32) hash alphabet: 0-9a-z without e, o, t, u.
   storeHashClass = "[0-9abcdfghijklmnpqrsvwxyz]{32}";
 
+  # Store path without its '/nix/store/<hash>-' prefix: the directory name a
+  # package's files are reported under, which can differ from `.name`.
+  storeDirName = path: builtins.head (builtins.match "/nix/store/${storeHashClass}-(.*)" path);
+
   toWrapped = path: "${dirOf path}/.${baseNameOf path}-wrapped";
 
   # String type that rejects leading '^' or trailing '$' anchors, since the
@@ -44,9 +48,10 @@ let
   #   - { value = pkgs.foobar; wrapped = true; } -> toWrapped(realpath(lib.getExe value))
   #   - { value = pkgs.foobar; path = "/bin/foo"; } -> "${lib.getBin value}${path}"
   #   - { regexp = "foo-[0-9]+"; path = "/bin/foo"; } -> regexp pattern
-  #   - Wildcard scope + value: store-directory regexp over the derivation
-  #     name, with a trailing '-wrapped' stripped (the real binaries live in
-  #     the unwrapped package's store directory).
+  #   - Wildcard scope + value: store-directory regexp over the bin output's
+  #     directory name (multi-output packages append the output to it), with a
+  #     trailing '-wrapped' stripped (the real binaries live in the unwrapped
+  #     package's store directory).
   packageType =
     let
       packageAttrSetType = lib.types.submodule {
@@ -541,10 +546,10 @@ let
         if hasRegexp then
           pkg.regexp
         else if hasValue then
-          # Derivations named `<base>-<version>-wrapped` contain only wrapper
-          # scripts and symlinks; the running process resolves to the
-          # unwrapped package's store path, so match against that name.
-          lib.escapeRegex (lib.removeSuffix "-wrapped" pkg.value.name)
+          # The bin output's store directory is where executables run from, and
+          # it can differ from `.name` (multi-output: 'curl-8.23.0-bin'). A
+          # trailing '-wrapped' is dropped: the real binaries live unwrapped.
+          lib.escapeRegex (lib.removeSuffix "-wrapped" (storeDirName (lib.getBin pkg.value).outPath))
         else
           builtins.throw "opensnix: rule '${name}' package must specify either 'value' or 'regexp'.";
     in
