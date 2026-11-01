@@ -119,6 +119,31 @@ and `port` variants, `processPath`, `processCommand`, and the `domains` and
 `hosts` lists — accept a `{ regexp = …; }` subkey in place of a plain value. The
 `^` and `$` anchors are added for you, so writing them yourself is an error.
 
+#### Condition aliases
+
+Some condition keys are aliases of others and map to the same OpenSnitch
+operand:
+
+| alias        | canonical    | operand            |
+| ------------ | ------------ | ------------------ |
+| `dstPort`    | `port`       | `dest.port`        |
+| `dstPorts`   | `ports`      | `dest.port`        |
+| `dstIp`      | `ip`         | `dest.ip`          |
+| `dstNetwork` | `network`    | `dest.network`     |
+| `user`       | `userName`   | `user.name`        |
+| `ifaceOut`   | `iface`      | `iface.out`        |
+| `hosts`      | `domains`    | `lists.domains`    |
+
+A rule may set at most one condition per operand, so combining an alias with
+its canonical key (`domains` together with `hosts`) or two shapes of the same
+operand (`port = 53` together with `ports = [ 53 853 ]`) is an evaluation
+error. OpenSnitch ANDs an operator's children, and two conditions on one
+operand are always redundant or impossible to satisfy together. Use the
+plural list fields (`ports`, `ips`, `nets`, `domains`) for OR over one field
+and the array fields (`users`, `userNames`, `userIds`) to expand one rule per
+value. Note that singular `host` (exact `dest.host`) is its own condition,
+distinct from the `hosts` alias.
+
 ## Running tests
 
 Unit tests use [nix-unit](https://github.com/nix-community/nix-unit) and live

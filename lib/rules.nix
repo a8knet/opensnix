@@ -100,6 +100,7 @@ let
       operand = "dest.port";
       valueType = lib.types.ints.u16;
       regexpType = regexpStrType;
+      aliasOf = "port";
     };
     srcPort = {
       type = "simple";
@@ -118,6 +119,7 @@ let
       type = "regexp";
       operand = "dest.port";
       valueType = lib.types.listOf lib.types.ints.u16;
+      aliasOf = "ports";
       inherit listToRegexp;
     };
     srcPorts = {
@@ -134,6 +136,7 @@ let
     user = {
       type = "simple";
       operand = "user.name";
+      aliasOf = "userName";
     };
     userId = {
       type = "simple";
@@ -150,6 +153,7 @@ let
       type = "simple";
       operand = "dest.ip";
       regexpType = regexpStrType;
+      aliasOf = "ip";
     };
     srcIp = {
       type = "simple";
@@ -164,6 +168,7 @@ let
     dstNetwork = {
       type = "network";
       operand = "dest.network";
+      aliasOf = "network";
     };
 
     proto = {
@@ -194,6 +199,7 @@ let
     ifaceOut = {
       type = "simple";
       operand = "iface.out";
+      aliasOf = "iface";
     };
 
     ips = {
@@ -213,7 +219,9 @@ let
     };
 
     domains = domainsSpec;
-    hosts = domainsSpec;
+    hosts = domainsSpec // {
+      aliasOf = "domains";
+    };
   };
 
   regexpSubmoduleType =
@@ -250,7 +258,9 @@ let
     lib.mkOption {
       type = optionType;
       default = null;
-      description = "OpenSnitch '${spec.operand}' (${spec.type}) condition.";
+      description =
+        (lib.optionalString (spec ? aliasOf) "Alias for '${spec.aliasOf}'. ")
+        + "OpenSnitch '${spec.operand}' (${spec.type}) condition.";
     }
   ) conditionMap;
 
@@ -269,6 +279,43 @@ let
       suffix = "userId";
     };
   };
+
+  # Effective operand of a condition key; lists values in `{ regexp = ...; }`
+  # form render to their own operand.
+  operandOf =
+    key: value:
+    let
+      spec = conditionMap.${key};
+    in
+    if spec.type == "lists" && builtins.isAttrs value then spec.regexpOperand else spec.operand;
+
+  # First operand claimed by two fragment keys (aliases included), or null.
+  # Array fields count as their condition key.
+  findOperandCollision =
+    fragment:
+    let
+      arrayFieldNames = builtins.attrNames (
+        lib.filterAttrs (k: _: (fragment.${k} or null) != null) arrayExpansionMap
+      );
+      entries =
+        map (k: {
+          label = k;
+          operand = operandOf k fragment.${k};
+        }) (lib.intersectLists (builtins.attrNames fragment) (builtins.attrNames conditionMap))
+        ++ map (k: {
+          label = k;
+          operand = operandOf arrayExpansionMap.${k}.conditionKey [ ];
+        }) arrayFieldNames;
+      collisions = lib.filterAttrs (_: es: builtins.length es > 1) (lib.groupBy (e: e.operand) entries);
+      first = builtins.head (builtins.attrNames collisions);
+    in
+    if collisions == { } then
+      null
+    else
+      {
+        operand = first;
+        labels = builtins.sort builtins.lessThan (map (e: e.label) collisions.${first});
+      };
 
   arrayOptions = lib.mapAttrs (
     _fieldName: spec:
@@ -653,11 +700,14 @@ let
             || (spec ? listToRegexp && v == [ ]);
           listFields = lib.filterAttrs isEmptyList fragment;
           listFieldNames = builtins.attrNames listFields;
+          collision = findOperandCollision fragment;
         in
         if builtins.length listFieldNames > 0 then
           builtins.throw "opensnix: rule '${name}' has empty list for '${builtins.head listFieldNames}'."
         else if builtins.length arrayFieldNames > 1 then
           builtins.throw "opensnix: rule '${name}' specifies multiple array fields (${builtins.concatStringsSep ", " arrayFieldNames}); only one is allowed."
+        else if collision != null then
+          builtins.throw "opensnix: rule '${name}' specifies multiple conditions for operand '${collision.operand}' (${builtins.concatStringsSep ", " collision.labels}); only one is allowed."
         else if arrayFieldNames == [ ] then
           [
             {
