@@ -17,6 +17,10 @@ let
       timestamp
       ;
   };
+
+  overridden = lib.filterAttrs (
+    k: v: builtins.hasAttr k rendered && rendered.${k} != v
+  ) config.services.opensnitch.rules;
 in
 {
   options.opensnix = {
@@ -88,13 +92,21 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    warnings = lib.optionals (!config.services.opensnitch.enable) [
-      ''
-        opensnix.enable is true but services.opensnitch.enable is false: opensnix
-        only populates services.opensnitch.rules, and the OpenSnitch module
-        ignores that option unless its service is enabled.
-      ''
-    ];
+    warnings =
+      lib.optionals (!config.services.opensnitch.enable) [
+        ''
+          opensnix.enable is true but services.opensnitch.enable is false: opensnix
+          only populates services.opensnitch.rules, and the OpenSnitch module
+          ignores that option unless its service is enabled.
+        ''
+      ]
+      ++ lib.optionals (overridden != { }) [
+        ''
+          opensnix: services.opensnitch.rules overrides opensnix-generated rules
+          (${lib.concatStringsSep ", " (lib.attrNames overridden)}); those rules are
+          no longer managed by opensnix alone.
+        ''
+      ];
 
     services.opensnitch.rules = rendered;
   };

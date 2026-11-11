@@ -59,7 +59,8 @@ let
                     description = "Stub of the real OpenSnitch module's enable option.";
                   };
                   rules = lib.mkOption {
-                    type = lib.types.attrs;
+                    type = lib.types.submodule { freeformType = lib.types.json; };
+                    default = { };
                     description = "Stub of the real OpenSnitch module's rules option.";
                   };
                 };
@@ -83,7 +84,8 @@ let
               };
             }
           )
-        ];
+        ]
+        ++ (t.extraModules or [ ]);
       };
       warnings = eval.config.warnings;
       warningCheck =

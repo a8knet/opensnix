@@ -57,6 +57,44 @@ each rule, are declared in
 [`modules/default.nix`](modules/default.nix) and
 [`lib/rules.nix`](lib/rules.nix).
 
+### Hand-written rules alongside opensnix
+
+opensnix writes its rules into the same option a hand-written
+`services.opensnitch.rules` uses, and every generated rule name is prefixed
+with `opensnix-`. The two sources merge by rule name, so adding a rule by hand
+works as usual:
+
+```nix
+{
+  services.opensnitch.rules."my-own-rule" = {
+    name = "my-own-rule";
+    action = "deny";
+    enabled = true;
+    duration = "always";
+    operator = {
+      type = "simple";
+      operand = "process.path";
+      data = "/bin/bar";
+    };
+  };
+}
+```
+
+Because the merge happens per rule name, a hand-written key matching a
+generated one interacts with it:
+
+- Setting a field that opensnix also sets (for example `action` on
+  `opensnix-foo`) is an evaluation error: the two definitions conflict, and
+  NixOS has no way to pick a winner. Drop the opensnix rule, or set the field
+  with `lib.mkForce`.
+- Setting a field opensnix does not set (for example `precedence`) changes the
+  generated rule silently. opensnix reports these rules as a warning during
+  evaluation, listing the affected rule names.
+
+opensnix deliberately keeps these two behaviours: collisions stay loud, and
+everything else follows the merge rules of `services.opensnitch.rules`, whose
+keys are exactly the files OpenSnitch loads.
+
 ### Examples
 
 Each example is an entry of `opensnix.rules`; the attribute name is the rule
