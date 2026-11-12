@@ -1,0 +1,10 @@
+[book]
+title = "opensnix"
+description = "A more user-friendly interface for OpenSnitch rules on NixOS"
+language = "en"
+src = "src"
+
+[output.html]
+git-repository-url = "https://github.com/a8knet/opensnix"
+additional-css = ["custom.css"]
+

@@ -39,12 +39,22 @@
 
       formatter = forAllSystems (system: pkgsFor.${system}.nixfmt-tree);
 
+      packages = forAllSystems (system: {
+        docs = import ./docs {
+          inherit self;
+          inherit (nixpkgs) lib;
+          pkgs = pkgsFor.${system};
+        };
+      });
+
       checks = forAllSystems (
         system:
         let
           pkgs = pkgsFor.${system};
         in
         {
+          inherit (self.packages.${system}) docs;
+
           test =
             pkgs.runCommand "opensnix-tests"
               {
