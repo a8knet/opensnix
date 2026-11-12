@@ -33,6 +33,7 @@ in
         "reject"
       ];
       default = "allow";
+      example = "deny";
       description = ''
         Action applied to rules that do not specify an explicit
         `allow`, `deny` or `reject` subkey.
@@ -42,6 +43,7 @@ in
     defaultPackageScope = lib.mkOption {
       type = opensnixLib.types.packageScope;
       default = "exact";
+      example = "wildcard";
       description = ''
         Default package resolution scope. Can be overridden per-rule with
         `package.scope`.
@@ -60,6 +62,10 @@ in
     timestamp = lib.mkOption {
       type = opensnixLib.types.timestamp;
       default = opensnixLib.utils.flakeDateToRfc3339 self.lastModifiedDate;
+      defaultText = lib.literalExpression ''
+        opensnixLib.utils.flakeDateToRfc3339 self.lastModifiedDate
+      '';
+      example = "2026-10-02T18:31:07Z";
       description = ''
         Timestamp used for the `created`/`updated` fields of every rule.
         Must be an RFC3339 UTC date-time: exactly `YYYY-MM-DDTHH:MM:SSZ`

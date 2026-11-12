@@ -39,6 +39,15 @@ let
     regexpOperand = "lists.domains_regexp";
     regexpFileName = "domains_regexp.list";
     regexpFormat = values: lib.concatStringsSep "\n" (map (d: "^(?:${d})$") values);
+    description = ''
+      Destination domain list written as a hosts-formatted `domains.list`
+      (`lists.domains` `lists` condition), or `{ regexp = [ ... ]; }` written as
+      `domains_regexp.list` (`lists.domains_regexp`).
+    '';
+    example = [
+      "example.com"
+      "example.org"
+    ];
   };
 
   # Package specification: either a bare package or an attrset with options.
@@ -55,31 +64,51 @@ let
   packageType =
     let
       packageAttrSetType = lib.types.submodule {
+        _file = ./rules.nix;
         options = {
           value = lib.mkOption {
             type = lib.types.nullOr lib.types.package;
             default = null;
-            description = "Package to resolve (mutually exclusive with regexp).";
+            example = lib.literalExpression "pkgs.firefox";
+            description = "Package to resolve (mutually exclusive with `regexp`).";
           };
           wrapped = lib.mkOption {
             type = lib.types.nullOr lib.types.bool;
             default = null;
-            description = "Apply toWrapped transformation (requires value, incompatible with path). null inherits from the enclosing group; an explicit false overrides a group's true.";
+            example = true;
+            description = ''
+              Apply `toWrapped` transformation (requires `value`, incompatible
+              with `path`). `null` inherits from the enclosing group; an
+              explicit `false` overrides a group's `true`.
+            '';
           };
           path = lib.mkOption {
             type = lib.types.nullOr lib.types.str;
             default = null;
-            description = "Explicit path within package (requires value, incompatible with wrapped).";
+            example = "/bin/curl";
+            description = ''
+              Explicit path within package (requires `value` or `regexp`,
+              incompatible with `wrapped`).
+            '';
           };
           regexp = lib.mkOption {
             type = lib.types.nullOr regexpStrType;
             default = null;
-            description = "Package name regexp (mutually exclusive with value, requires path).";
+            example = "python3-[0-9.]+";
+            description = ''
+              Package store directory regexp (mutually exclusive with `value`,
+              requires `path` in `exact` scope).
+            '';
           };
           scope = lib.mkOption {
             type = lib.types.nullOr types.packageScope;
             default = null;
-            description = "Override defaultPackageScope for this rule. null inherits from the group or defaultPackageScope; to undo a group's scope set an explicit value.";
+            example = "wildcard";
+            description = ''
+              Override `defaultPackageScope` for this rule. `null` inherits from
+              the group or `defaultPackageScope`; to undo a group's scope set an
+              explicit value.
+            '';
           };
         };
       };
@@ -95,6 +124,11 @@ let
       type = "simple";
       operand = "dest.host";
       regexpType = regexpStrType;
+      description = ''
+        Destination hostname (`dest.host`), or `{ regexp = "..."; }` for an
+        anchored regular expression.
+      '';
+      example = "example.com";
     };
 
     port = {
@@ -102,6 +136,11 @@ let
       operand = "dest.port";
       valueType = lib.types.ints.u16;
       regexpType = regexpStrType;
+      description = ''
+        Destination port number (`dest.port`), or `{ regexp = "..."; }` for an
+        anchored regular expression.
+      '';
+      example = 443;
     };
     dstPort = {
       type = "simple";
@@ -109,12 +148,22 @@ let
       valueType = lib.types.ints.u16;
       regexpType = regexpStrType;
       aliasOf = "port";
+      description = ''
+        Destination port number (`dest.port`), or `{ regexp = "..."; }` for an
+        anchored regular expression.
+      '';
+      example = 443;
     };
     srcPort = {
       type = "simple";
       operand = "source.port";
       valueType = lib.types.ints.u16;
       regexpType = regexpStrType;
+      description = ''
+        Source port number (`source.port`), or `{ regexp = "..."; }` for an
+        anchored regular expression.
+      '';
+      example = 5353;
     };
 
     ports = {
@@ -122,6 +171,14 @@ let
       operand = "dest.port";
       valueType = lib.types.listOf lib.types.ints.u16;
       inherit listToRegexp;
+      description = ''
+        List of destination port numbers combined into an anchored alternation
+        regexp (`dest.port`).
+      '';
+      example = [
+        80
+        443
+      ];
     };
     dstPorts = {
       type = "regexp";
@@ -129,85 +186,161 @@ let
       valueType = lib.types.listOf lib.types.ints.u16;
       aliasOf = "ports";
       inherit listToRegexp;
+      description = ''
+        List of destination port numbers combined into an anchored alternation
+        regexp (`dest.port`).
+      '';
+      example = [
+        80
+        443
+      ];
     };
     srcPorts = {
       type = "regexp";
       operand = "source.port";
       valueType = lib.types.listOf lib.types.ints.u16;
       inherit listToRegexp;
+      description = ''
+        List of source port numbers combined into an anchored alternation
+        regexp (`source.port`).
+      '';
+      example = [
+        67
+        68
+      ];
     };
 
     userName = {
       type = "simple";
       operand = "user.name";
+      description = ''
+        Owner username of the process initiating the connection (`user.name`).
+      '';
+      example = "systemd-resolve";
     };
     user = {
       type = "simple";
       operand = "user.name";
       aliasOf = "userName";
+      description = ''
+        Owner username of the process initiating the connection (`user.name`).
+      '';
+      example = "systemd-resolve";
     };
     userId = {
       type = "simple";
       operand = "user.id";
       valueType = lib.types.ints.unsigned;
+      description = ''
+        Numeric UID of the process initiating the connection (`user.id`).
+      '';
+      example = 1000;
     };
 
     ip = {
       type = "simple";
       operand = "dest.ip";
       regexpType = regexpStrType;
+      description = ''
+        Destination IP address (`dest.ip`), or `{ regexp = "..."; }` for an
+        anchored regular expression.
+      '';
+      example = "9.9.9.9";
     };
     dstIp = {
       type = "simple";
       operand = "dest.ip";
       regexpType = regexpStrType;
       aliasOf = "ip";
+      description = ''
+        Destination IP address (`dest.ip`), or `{ regexp = "..."; }` for an
+        anchored regular expression.
+      '';
+      example = "9.9.9.9";
     };
     srcIp = {
       type = "simple";
       operand = "source.ip";
       regexpType = regexpStrType;
+      description = ''
+        Source IP address (`source.ip`), or `{ regexp = "..."; }` for an
+        anchored regular expression.
+      '';
+      example = "192.168.1.10";
     };
 
     network = {
       type = "network";
       operand = "dest.network";
+      description = ''
+        Destination CIDR subnet or OpenSnitch network alias such as `"LAN"` or
+        `"MULTICAST"` (`dest.network` `network` condition).
+      '';
+      example = "10.0.0.0/8";
     };
     dstNetwork = {
       type = "network";
       operand = "dest.network";
       aliasOf = "network";
+      description = ''
+        Destination CIDR subnet or OpenSnitch network alias such as `"LAN"` or
+        `"MULTICAST"` (`dest.network` `network` condition).
+      '';
+      example = "10.0.0.0/8";
     };
 
     proto = {
       type = "simple";
       operand = "protocol";
       valueType = types.protocol;
+      description = ''
+        Transport or network protocol matched case-insensitively (`protocol`).
+      '';
+      example = "udp";
     };
 
     processPath = {
       type = "simple";
       operand = "process.path";
       regexpType = regexpStrType;
+      description = ''
+        Executable path of the process (`process.path`), or
+        `{ regexp = "..."; }` for an anchored regular expression. Cannot be
+        combined with `package`.
+      '';
+      example = "/run/current-system/sw/bin/curl";
     };
     processCommand = {
       type = "simple";
       operand = "process.command";
       regexpType = regexpStrType;
+      description = ''
+        Full command line of the process (`process.command`), or
+        `{ regexp = "..."; }` for an anchored regular expression.
+      '';
+      example = {
+        regexp = "python3 -m http[.]server.*";
+      };
     };
 
     iface = {
       type = "simple";
       operand = "iface.out";
+      description = "Outbound network interface name (`iface.out`).";
+      example = "wlan0";
     };
     ifaceIn = {
       type = "simple";
       operand = "iface.in";
+      description = "Inbound network interface name (`iface.in`).";
+      example = "eth0";
     };
     ifaceOut = {
       type = "simple";
       operand = "iface.out";
       aliasOf = "iface";
+      description = "Outbound network interface name (`iface.out`).";
+      example = "wlan0";
     };
 
     ips = {
@@ -216,6 +349,14 @@ let
       valueType = lib.types.listOf lib.types.str;
       fileName = "ips.list";
       format = values: lib.concatStringsSep "\n" values;
+      description = ''
+        Destination IP address list written to `ips.list` (`lists.ips` `lists`
+        condition).
+      '';
+      example = [
+        "1.1.1.1"
+        "9.9.9.9"
+      ];
     };
 
     nets = {
@@ -224,6 +365,14 @@ let
       valueType = lib.types.listOf lib.types.str;
       fileName = "nets.list";
       format = values: lib.concatStringsSep "\n" values;
+      description = ''
+        Destination CIDR network list written to `nets.list` (`lists.nets`
+        `lists` condition).
+      '';
+      example = [
+        "10.0.0.0/8"
+        "192.168.0.0/16"
+      ];
     };
 
     domains = domainsSpec;
@@ -234,13 +383,18 @@ let
 
   regexpSubmoduleType =
     innerType:
-    lib.types.submodule {
+    (lib.types.submodule {
       options = {
         regexp = lib.mkOption {
           type = innerType;
           description = ".regexp value must be a string";
         };
       };
+    })
+    // {
+      description = "{ regexp = ${innerType.description}; }";
+      descriptionClass = "noun";
+      getSubOptions = _: { };
     };
 
   # Typed option attrs for a single rule fragment, derived from `conditionMap`
@@ -263,13 +417,17 @@ let
         else
           lib.types.nullOr baseType;
     in
-    lib.mkOption {
-      type = optionType;
-      default = null;
-      description =
-        (lib.optionalString (spec ? aliasOf) "Alias for '${spec.aliasOf}'. ")
-        + "OpenSnitch '${spec.operand}' (${spec.type}) condition.";
-    }
+    lib.mkOption (
+      {
+        type = optionType;
+        default = null;
+        description =
+          (lib.optionalString (spec ? aliasOf) "Alias for `${spec.aliasOf}`. ") + spec.description;
+      }
+      // lib.optionalAttrs (spec ? example) {
+        inherit (spec) example;
+      }
+    )
   ) conditionMap;
 
   # Map array-expansion fields to their condition key and rule-name suffix.
@@ -277,14 +435,26 @@ let
     users = {
       conditionKey = "user";
       suffix = "user";
+      example = [
+        "alice"
+        "bob"
+      ];
     };
     userNames = {
       conditionKey = "userName";
       suffix = "user";
+      example = [
+        "alice"
+        "bob"
+      ];
     };
     userIds = {
       conditionKey = "userId";
       suffix = "userId";
+      example = [
+        1000
+        1001
+      ];
     };
   };
 
@@ -333,14 +503,24 @@ let
     lib.mkOption {
       type = lib.types.nullOr (lib.types.listOf valueType);
       default = null;
-      description = "Expand one rule per element into separate OpenSnitch rules.";
+      inherit (spec) example;
+      description = ''
+        Expand one rule per element into separate OpenSnitch rules named
+        `opensnix-<rule>-${spec.suffix}-<value>`, setting `${spec.conditionKey}`
+        on each.
+      '';
     }
   ) arrayExpansionMap;
 
   packageOption = lib.mkOption {
     type = lib.types.nullOr packageType;
     default = null;
-    description = "Resolve a Nix package to a process condition.";
+    example = lib.literalExpression "pkgs.curl";
+    description = ''
+      Resolve a Nix package to a `process.path` condition. Accepts a bare
+      package (coerced to `{ value = <pkg>; }`) or an attribute set of package
+      options.
+    '';
   };
 
   conditionsTypeWithArrays = lib.types.submodule {
@@ -350,6 +530,7 @@ let
   precedenceOption = lib.mkOption {
     type = lib.types.nullOr lib.types.bool;
     default = null;
+    example = true;
     description = ''
       OpenSnitch rule precedence ("Priority rule"). When `true`, a matching
       rule short-circuits evaluation immediately, so an `allow` rule with
@@ -366,17 +547,20 @@ let
     allow = lib.mkOption {
       type = lib.types.nullOr conditionsTypeWithArrays;
       default = null;
-      description = "Wrap a fragment with the 'allow' action.";
+      visible = "shallow";
+      description = "Wrap a rule fragment with the `allow` action.";
     };
     deny = lib.mkOption {
       type = lib.types.nullOr conditionsTypeWithArrays;
       default = null;
-      description = "Wrap a fragment with the 'deny' action.";
+      visible = "shallow";
+      description = "Wrap a rule fragment with the `deny` action.";
     };
     reject = lib.mkOption {
       type = lib.types.nullOr conditionsTypeWithArrays;
       default = null;
-      description = "Wrap a fragment with the 'reject' action.";
+      visible = "shallow";
+      description = "Wrap a rule fragment with the `reject` action.";
     };
     precedence = precedenceOption;
   }
@@ -392,10 +576,12 @@ let
   # self-referential: child entries may themselves be groups, so grouping
   # nests to unlimited depth, while remaining fully typed at every level.
   groupedRuleType = lib.types.submodule {
+    _file = ./rules.nix;
     options = ruleOptions // {
       rules = lib.mkOption {
         type = lib.types.nullOr (lib.types.attrsOf groupedRuleType);
         default = null;
+        visible = "shallow";
         description = ''
           Turn this entry into a group. Its condition fields, `allow`/`deny`/`reject`
           wrapper, and `precedence` are inherited by every child rule (child
