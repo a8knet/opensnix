@@ -65,6 +65,41 @@ opensnix.rules.telemetry.deny.host.regexp = ".*[.]telemetry[.]example[.]com";
 `opensnix` wraps every pattern in `^(?:<pattern>)$` automatically. Writing a
 leading `^` or trailing `$` yourself is an evaluation error.
 
+## Plural List Conditions
+
+Plural condition keys match any element in a list within a **single**
+OpenSnitch rule (logical OR across the list's elements):
+
+- **Port lists (`ports`, `dstPorts`, `srcPorts`)**: Compiled into a single
+  `type = "regexp"` condition with an anchored alternation pattern on
+  `dest.port` or `source.port` (for example `ports = [ 80 443 ];` renders to
+  `^(?:80|443)$`).
+- **Domain lists (`domains`, `hosts`)**: Written to a Nix store directory
+  containing `domains.list` in hosts-file format (`0.0.0.0 <domain>` per line)
+  for OpenSnitch's `lists.domains` `lists` operator.
+- **Regexp domain lists (`domains.regexp`, `hosts.regexp`)**: Written to a Nix
+  store directory containing `domains_regexp.list` (with each entry wrapped in
+  `^(?:<pattern>)$`) for OpenSnitch's `lists.domains_regexp` `lists` operator.
+- **IP and network lists (`ips`, `nets`)**: Written to a Nix store directory
+  containing `ips.list` (`lists.ips`) or `nets.list` (`lists.nets`), one IP
+  address or CIDR subnet per line.
+
+```nix
+opensnix.rules.dns-and-web = {
+  ports = [
+    53
+    443
+  ];
+  domains = [
+    "example.com"
+    "example.org"
+  ];
+};
+```
+
+Passing an empty list (`[ ]`) to any plural list condition (including
+`domains.regexp = [ ];`) is an evaluation error.
+
 ## Multi-Rule Array Expansions
 
 While plural list conditions (`ports`, `ips`, `nets`, `domains`) match any value
@@ -124,11 +159,16 @@ operand:
 | `ifaceOut`   | `iface`    | `iface.out`        |
 | `hosts`      | `domains`  | `lists.domains`    |
 
+*(When used with `{ regexp = [ ... ]; }`, both `domains` and `hosts` map to
+`lists.domains_regexp` instead of `lists.domains`.)*
+
 A rule may set at most one condition per operand. Combining an alias with its
 canonical key (`domains` together with `hosts`) or two shapes of the same
 operand (`port = 53` together with `ports = [ 53 853 ]`) is an evaluation
 error: OpenSnitch ANDs an operator's children, so two conditions on the same
 operand are always redundant or impossible to satisfy together.
 
-Note that singular `host` (exact `dest.host`) is its own condition, distinct
-from the `hosts` list alias (`lists.domains`).
+Note that singular `host` (`dest.host`), bare `domains`/`hosts`
+(`lists.domains`), and regexp `domains.regexp`/`hosts.regexp`
+(`lists.domains_regexp`) have distinct OpenSnitch operands and can be combined
+in the same rule when needed.
