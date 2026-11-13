@@ -56,3 +56,7 @@ inspect the store path string.
 - **`regexp = "python3-[0-9.]+"`**: Matches any store directory whose name
   after the 32-character Nix store hash matches the pattern. Requires `path` in
   `exact` scope.
+
+Because `package` resolves to a `process.path` condition, a rule cannot set
+both `package` and `processPath`. See [Groups & Inheritance](groups.md) for how
+partial `package` attributes merge across rule groups.

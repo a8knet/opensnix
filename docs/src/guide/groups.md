@@ -21,6 +21,9 @@ opensnix.rules.systemd-resolved = {
 
 ## How Inheritance Works
 
+A group is a pure defaults container: **no OpenSnitch rule is emitted for the
+group itself**, only for its leaf children (`opensnix-<group>-<child>`).
+
 Every child rule inside `rules` inherits its parent group's:
 
 - Top-level conditions (such as `userName`, `package`, `proto`, `iface`, etc.)
@@ -33,13 +36,48 @@ wins. The two child rules in the example above are rendered as
 `opensnix-systemd-resolved-dns` and `opensnix-systemd-resolved-dnssec`, and
 both carry `userName = "systemd-resolve"`.
 
-Groups can nest to any depth (`opensnix-<parent>-<child>-<grandchild>`). An
-empty `rules = { };` group is an evaluation error.
+Groups can nest to any depth (`opensnix-<parent>-<child>-<grandchild>`).
+Operand collisions (for example a group setting `domains` and a child setting
+its `hosts` alias) and duplicate rule names (for example a top-level `g-web`
+rule alongside `g.rules.web`) are checked after group inheritance is resolved.
+An empty `rules = { };` group is an evaluation error.
 
 ## Package Option Merging Across Groups
 
-When a parent group sets `package` (for example `package.scope = "wildcard";`
-or `package.wrapped = true;`) and a child rule supplies its own `package` (such
-as a bare `package = pkgs.firefox;`), the child inherits the parent's `scope`
-and `wrapped` settings unless the child explicitly overrides them (for example
-`scope = "exact";` or `wrapped = false;`).
+When both a parent group and a child rule set `package`, unset (`null`)
+submodule fields on the child are dropped before merging so partial `package`
+definitions combine cleanly while explicit child settings override the parent:
+
+```nix
+opensnix.rules = {
+  systemd = {
+    package.regexp = "systemd-[0-9]+[.][0-9]+";
+    rules = {
+      resolved = {
+        package.path = "/lib/systemd/systemd-resolved";
+        port = 53;
+      };
+      timesyncd = {
+        package.path = "/lib/systemd/systemd-timesyncd";
+        port = 123;
+      };
+    };
+  };
+
+  browsers = {
+    package = {
+      value = pkgs.firefox;
+      wrapped = true;
+    };
+    rules = {
+      web.port = 443;
+      unwrapped.package.wrapped = false;
+    };
+  };
+};
+```
+
+In `systemd`, each child supplies its own `package.path` and inherits the
+group's `package.regexp`. In `browsers`, `web` inherits `wrapped = true;` while
+`unwrapped` explicitly overrides it with `wrapped = false;` (or overrides a
+group's `scope = "wildcard";` with `scope = "exact";`).
