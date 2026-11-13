@@ -30,6 +30,26 @@ A rule may specify conditions either at the top level of the entry (using
 `reject`. Setting `precedence = true;` on a rule gives it priority over
 non-precedence rules in OpenSnitch.
 
+## Combining Multiple Conditions
+
+A rule with a single condition emits that condition's OpenSnitch operator
+directly. When a rule sets two or more conditions (whether declared directly on
+the rule, inside an `allow`/`deny`/`reject` wrapper, or inherited from a
+[rule group](groups.md)), `opensnix` combines them into an OpenSnitch
+`type = "list"` (`operand = "list"`) operator where **all** conditions must
+match (logical AND):
+
+```nix
+opensnix.rules.api = {
+  host = "api.example.com";
+  port = 443;
+  proto = "tcp";
+};
+```
+
+Every rule must contain at least one condition; an empty rule fragment
+(`opensnix.rules.foo = { };`) is an evaluation error.
+
 ## Regular Expressions
 
 Condition keys that match a pattern rather than a single literal value - `host`,
