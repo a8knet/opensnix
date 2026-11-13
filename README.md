@@ -5,9 +5,16 @@
 A more user-friendly interface for
 [OpenSnitch](https://github.com/evilsocket/opensnitch) rules on NixOS.
 
-## Usage
+## Documentation
 
-Add opensnix as a flake input and import its NixOS module:
+Full documentation, user guides, and the generated configuration option
+reference are published at:
+
+**[https://a8knet.github.io/opensnix/](https://a8knet.github.io/opensnix/)**
+
+## Quick Start
+
+Add `opensnix` as a flake input and import its NixOS module:
 
 ```nix
 # flake.nix
@@ -32,7 +39,7 @@ Add opensnix as a flake input and import its NixOS module:
 }
 ```
 
-Then enable opensnix and declare rules in any module or `configuration.nix`:
+Then enable both `services.opensnitch` and `opensnix` and declare rules:
 
 ```nix
 { pkgs, ... }:
@@ -42,211 +49,21 @@ Then enable opensnix and declare rules in any module or `configuration.nix`:
   opensnix = {
     enable = true;
     rules = {
-      # ... rules go here, see Examples below
+      lan.network = "10.0.0.0/8";
+      firefox.package = {
+        value = pkgs.firefox;
+        scope = "wildcard";
+      };
+      telemetry.deny.host.regexp = ".*[.]telemetry[.]example[.]com";
     };
   };
 }
 ```
 
-opensnix only populates `services.opensnitch.rules`, and the OpenSnitch module
-reads that option only while `services.opensnitch.enable` is true, so the
-service has to be enabled as well.
-
-The option names accepted under `opensnix`, and the condition keys accepted by
-each rule, are declared in
-[`modules/default.nix`](modules/default.nix) and
-[`lib/rules.nix`](lib/rules.nix).
-
-### Hand-written rules alongside opensnix
-
-opensnix writes its rules into the same option a hand-written
-`services.opensnitch.rules` uses, and every generated rule name is prefixed
-with `opensnix-`. The two sources merge by rule name, so adding a rule by hand
-works as usual:
-
-```nix
-{
-  services.opensnitch.rules."my-own-rule" = {
-    name = "my-own-rule";
-    action = "deny";
-    enabled = true;
-    duration = "always";
-    operator = {
-      type = "simple";
-      operand = "process.path";
-      data = "/bin/bar";
-    };
-  };
-}
-```
-
-Because the merge happens per rule name, a hand-written key matching a
-generated one interacts with it:
-
-- Setting a field that opensnix also sets (for example `action` on
-  `opensnix-foo`) is an evaluation error: the two definitions conflict, and
-  NixOS has no way to pick a winner. Drop the opensnix rule, or set the field
-  with `lib.mkForce`.
-- Setting a field opensnix does not set (for example `precedence`) changes the
-  generated rule silently. opensnix reports these rules as a warning during
-  evaluation, listing the affected rule names.
-
-opensnix deliberately keeps these two behaviours: collisions stay loud, and
-everything else follows the merge rules of `services.opensnitch.rules`, whose
-keys are exactly the files OpenSnitch loads.
-
-### Examples
-
-Each example is an entry of `opensnix.rules`; the attribute name is the rule
-identifier, and opensnix prefixes generated rule names with `opensnix-`.
-
-#### Network
-
-```nix
-opensnix.rules.lan.network = "10.0.0.0/8";
-```
-
-An entry with no explicit `allow`, `deny` or `reject` subkey gets
-`opensnix.defaultAction`, which is `"allow"` unless you set it otherwise.
-`deny` drops connections silently; `reject` additionally kills the socket, so
-the application gets an immediate error instead of waiting for a timeout.
-
-#### Package, with wildcard scope
-
-```nix
-opensnix.rules.firefox.package = {
-  value = pkgs.firefox;
-  scope = "wildcard";
-};
-```
-
-`package` turns a Nix package into a process condition. The default scope
-resolves to the package's main executable; `scope = "wildcard"` matches every
-binary inside the package instead, anchored at the store directory of the
-package's `bin` output (a multi-output package keeps its executables in a
-directory like `curl-8.23.0-bin`). Resolving an executable runs `realpath` in a
-build phase (import-from-derivation): evaluating such a rule builds the package
-at eval time. `path` and `scope = "wildcard"` avoid that; they only use the
-store path.
-
-#### Group with inherited children
-
-```nix
-opensnix.rules.systemd-resolved = {
-  userName = "systemd-resolve";
-  rules = {
-    dns = {
-      network = "LAN";
-      port = 53;
-    };
-    dnssec = {
-      domains = [ "example.org" ];
-      port = 853;
-    };
-  };
-};
-```
-
-Setting `rules` makes the entry a group: its conditions, its `allow`/`deny`/`reject`
-wrapper and its `precedence` are inherited by every child, with the child
-winning on conflict. The two rules above are generated as
-`opensnix-systemd-resolved-dns` and `opensnix-systemd-resolved-dnssec`, and both
-carry `userName = "systemd-resolve"`. Groups nest to any depth.
-
-#### Deny, with a regexp host
-
-```nix
-opensnix.rules.telemetry.deny.host.regexp = ".*[.]telemetry[.]example[.]com";
-```
-
-Keys that match a pattern rather than a single exact value — `host`, the `ip`
-and `port` variants, `processPath`, `processCommand`, and the `domains` and
-`hosts` lists — accept a `{ regexp = …; }` subkey in place of a plain value. The
-`^` and `$` anchors are added for you, so writing them yourself is an error.
-
-#### Condition aliases
-
-Some condition keys are aliases of others and map to the same OpenSnitch
-operand:
-
-| alias        | canonical    | operand            |
-| ------------ | ------------ | ------------------ |
-| `dstPort`    | `port`       | `dest.port`        |
-| `dstPorts`   | `ports`      | `dest.port`        |
-| `dstIp`      | `ip`         | `dest.ip`          |
-| `dstNetwork` | `network`    | `dest.network`     |
-| `user`       | `userName`   | `user.name`        |
-| `ifaceOut`   | `iface`      | `iface.out`        |
-| `hosts`      | `domains`    | `lists.domains`    |
-
-A rule may set at most one condition per operand, so combining an alias with
-its canonical key (`domains` together with `hosts`) or two shapes of the same
-operand (`port = 53` together with `ports = [ 53 853 ]`) is an evaluation
-error. OpenSnitch ANDs an operator's children, and two conditions on one
-operand are always redundant or impossible to satisfy together. Use the
-plural list fields (`ports`, `ips`, `nets`, `domains`) for OR over one field
-and the array fields (`users`, `userNames`, `userIds`) to expand one rule per
-value. Note that singular `host` (exact `dest.host`) is its own condition,
-distinct from the `hosts` alias.
-
-## Running tests
-
-Unit tests use [nix-unit](https://github.com/nix-community/nix-unit) and live
-in the `tests/unit/` directory. `checks.shell-realpath`
-(`tests/shell/realpath.nix`) additionally tests the `lib/pkgs-utils.nix` builder
-script directly instead of the unit-test mock.
-
-```sh
-nix flake check
-```
-
-### How the tests are organized
-
-Three categories live under `tests/`: `unit/` — mocked pure-evaluation suites;
-`shell/` — contracts for shell builder scripts, run as flake checks; `vm/` —
-integration against the real opensnitchd daemon. Every `*.nix` file in
-`tests/shell/` becomes a check `shell-<filename>`, taking `{ pkgs, utils }` and
-returning a derivation.
-
-Tests are pure-data suites under `tests/unit/` — one `*.nix` file per group of
-related cases, each entry a `{ expr, expected }` pair. `expr` is the raw opensnix
-rules; `expected` is the OpenSnitch rule body minus the invariant `base` fields.
-`tests/unit/default.nix` auto-discovers every `*.nix` under `tests/unit/` (except
-itself), wraps `expr` with `mkRules`, merges `expected` with `base`, and namespaces
-each test as `test-<suite>-<key>`. A test may set `defaultAction` (default
-`"allow"`) for rules that don't specify `allow`/`deny`/`reject`.
-
-To add a test, drop a `{ expr, expected }` entry into a suite, or add a new
-suite file — both are picked up automatically.
-
-### VM smoke test
-
-`tests/vm/` holds NixOS VM tests that boot a real OpenSnitch daemon and
-assert that every rule opensnix renders is deployed and loaded correctly.
-These are deliberately not part of `nix flake check` (they build a disk
-image and need KVM); CI runs them in a separate job. To run one locally:
-
-```sh
-nix build .#vmTests.x86_64-linux.smoke -L
-```
-
-## Formatting and linting
-
-Formatting uses [nixfmt](https://github.com/NixOS/nixfmt) (the official Nix
-formatter, via `nixfmt-tree`), and linting uses
-[statix](https://github.com/oppiliappan/statix) plus
-[deadnix](https://github.com/astro/deadnix).
-
-```sh
-nix fmt            # format every .nix file in the tree
-nix flake check    # runs unit tests, linter, formatter, and shell checks
-```
-
-Linting is enforced by `nix flake check`. To run only the linter locally:
-
-```sh
-nix build .#checks.x86_64-linux.lint
-```
+See the [online documentation](https://a8knet.github.io/opensnix/) for the
+complete [User Guide](https://a8knet.github.io/opensnix/guide/rules.html) and
+[Configuration Options](https://a8knet.github.io/opensnix/reference/options.html)
+reference, or build the book locally with `nix build .#docs`.
 
 ## License
 
