@@ -25,7 +25,8 @@ Every child rule inside `rules` inherits its parent group's:
 
 - Top-level conditions (such as `userName`, `package`, `proto`, `iface`, etc.)
 - Action wrapper (`allow`, `deny`, or `reject`) and the conditions inside it
-- `precedence` flag
+- `precedence` flag (a child rule can undo a group's `precedence = true;` by
+  setting `precedence = false;` explicitly)
 
 When both a parent group and a child rule define the same attribute, the child
 wins. The two child rules in the example above are rendered as

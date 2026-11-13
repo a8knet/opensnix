@@ -27,8 +27,31 @@ An entry with no explicit `allow`, `deny`, or `reject` subkey uses
 
 A rule may specify conditions either at the top level of the entry (using
 `opensnix.defaultAction`) or inside at most one of `allow`, `deny`, or
-`reject`. Setting `precedence = true;` on a rule gives it priority over
-non-precedence rules in OpenSnitch.
+`reject`.
+
+## Rule Precedence
+
+Setting `precedence = true;` marks a rule as a priority rule in OpenSnitch:
+
+```nix
+opensnix.rules.trusted-dns = {
+  allow = {
+    ip = "9.9.9.9";
+    port = 53;
+  };
+  precedence = true;
+};
+```
+
+- When `precedence = true;`, a matching rule short-circuits OpenSnitch rule
+  evaluation immediately, so an `allow` rule with precedence wins over any
+  later matching `deny` rule (`deny` and `reject` rules already short-circuit
+  in OpenSnitch).
+- When `precedence` is unset (`null`, the default), the `precedence` field is
+  omitted from the generated rule JSON.
+- Setting `precedence = false;` emits `"precedence": false` explicitly, which
+  allows a child rule to override `precedence = true;` inherited from an
+  enclosing [rule group](groups.md).
 
 ## Combining Multiple Conditions
 
