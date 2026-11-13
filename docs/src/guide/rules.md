@@ -4,6 +4,11 @@ Each entry under `opensnix.rules.<name>` defines either a single rule or a
 [rule group](groups.md). The attribute name is the rule identifier, and
 `opensnix` prefixes every generated OpenSnitch rule name with `opensnix-`.
 
+Rule identifiers (including names produced by group and array expansion) must
+start with an alphanumeric character and contain only `[A-Za-z0-9._-]`.
+Characters such as `/` are rejected at evaluation time because each rule name
+is linked as a filename into OpenSnitch's rules directory.
+
 ## Rule Actions
 
 ```nix
@@ -195,3 +200,13 @@ Note that singular `host` (`dest.host`), bare `domains`/`hosts`
 (`lists.domains`), and regexp `domains.regexp`/`hosts.regexp`
 (`lists.domains_regexp`) have distinct OpenSnitch operands and can be combined
 in the same rule when needed.
+
+## Network Subnets, Aliases & Protocols
+
+- **`network` and `dstNetwork`**: Accept either a CIDR subnet (`"10.0.0.0/8"`)
+  or an OpenSnitch network alias such as `"LAN"` or `"MULTICAST"` (`type =
+  "network"`, `operand = "dest.network"`). They do not accept `{ regexp =
+  "..."; }`.
+- **`proto`**: Validated case-insensitively at evaluation time against the
+  protocol strings OpenSnitch produces: `tcp`, `tcp6`, `udp`, `udp6`,
+  `udplite`, `udplite6`, `sctp`, `sctp6`, `icmp`, and `icmp6`.
