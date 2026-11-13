@@ -45,16 +45,49 @@ opensnix.rules.telemetry.deny.host.regexp = ".*[.]telemetry[.]example[.]com";
 `opensnix` wraps every pattern in `^(?:<pattern>)$` automatically. Writing a
 leading `^` or trailing `$` yourself is an evaluation error.
 
-## Lists vs. Multi-Rule Array Expansions
+## Multi-Rule Array Expansions
 
-- **Plural list conditions** (`ports`, `dstPorts`, `srcPorts`, `ips`, `nets`,
-  `domains`, `hosts`) match any value in the list within a single OpenSnitch
-  rule (via an alternation regexp for ports or a generated list directory for
-  IPs, CIDR nets, and domains).
-- **Multi-rule array expansions** (`users`, `userNames`, `userIds`) expand one
-  rule entry into separate OpenSnitch rules named
-  `opensnix-<rule>-user-<value>` or `opensnix-<rule>-uid-<value>`, one per
-  element.
+While plural list conditions (`ports`, `ips`, `nets`, `domains`) match any value
+within a single OpenSnitch rule, the user array fields (`users`, `userNames`,
+and `userIds`) expand a single `opensnix.rules.<name>` entry into **one
+generated OpenSnitch rule per element**:
+
+- `users` and `userNames` generate rules named `opensnix-<rule>-user-<name>`,
+  setting `userName = "<name>"` (`user.name`) on each rule.
+- `userIds` generates rules named `opensnix-<rule>-userId-<id>`, setting
+  `userId = <id>` (`user.id`) on each rule.
+
+```nix
+opensnix.rules.https = {
+  users = [
+    "alice"
+    "bob"
+  ];
+  host = "example.com";
+  port = 443;
+};
+```
+
+The declaration above produces two OpenSnitch rules -
+`opensnix-https-user-alice` and `opensnix-https-user-bob` - that share the
+`host = "example.com"` and `port = 443` conditions alongside each user's
+`user.name` condition.
+
+When an array field is set on a [rule group](groups.md), it is inherited by the
+group's leaf children and expands at each leaf (for example
+`opensnix-<group>-<child>-user-<name>`).
+
+Array expansions enforce the following rules at evaluation time:
+
+- **One array field per rule**: A rule may specify at most one of `users`,
+  `userNames`, or `userIds`.
+- **No same-operand collision**: Combining `users` or `userNames` with `user`
+  or `userName`, or combining `userIds` with `userId`, is an evaluation error.
+- **Non-empty arrays**: An empty list (`users = [ ];`) is an evaluation error.
+- **Unique generated rule names**: Duplicate elements
+  (`users = [ "bob" "bob" ];`) or another rule whose name collides with an
+  expanded name (`foo-user-bob` alongside `foo.users = [ "bob" ]`) raise a
+  duplicate-rule-name error.
 
 ## Condition Aliases
 
