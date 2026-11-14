@@ -1,8 +1,11 @@
 { lib }:
 let
   utils = import ./utils.nix;
+
+  # POSIX shell-safe environment variable name.
+  envNameClass = "[A-Za-z_][A-Za-z0-9_]*";
 in
-{
+rec {
   packageScope = lib.types.enum [
     "exact"
     "wildcard"
@@ -63,5 +66,20 @@ in
       description = "{ regexp = ${innerType.description}; }";
       descriptionClass = "noun";
       getSubOptions = _: { };
+    };
+
+  # One environment variable condition: either the literal value to compare
+  # against ('simple') or '{ regexp = "..."; }' ('regexp').
+  envValue = lib.types.either lib.types.str (regexpSubmodule regexpStr);
+
+  # Conditions keyed by environment variable name, each rendered to its own
+  # 'process.env.<NAME>' operand.
+  envVars =
+    (lib.types.addCheck (lib.types.attrsOf envValue) (
+      v: lib.all (n: builtins.match envNameClass n != null) (lib.attrNames v)
+    ))
+    // {
+      description = "attribute set of environment variable conditions";
+      descriptionClass = "noun";
     };
 }

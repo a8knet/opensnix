@@ -17,6 +17,10 @@ let
 
   listToRegexp = values: "(?:" + (lib.concatStringsSep "|" (map builtins.toString values)) + ")";
 
+  # OpenSnitch carries the environment variable name inside the operand
+  # ('process.env.<NAME>'), so there is no single 'process.env' operand.
+  envOperandPrefix = "process.env.";
+
   domainsSpec = {
     type = "lists";
     operand = "lists.domains";
@@ -311,6 +315,20 @@ let
       };
     };
 
+    processEnv = {
+      type = "env";
+      valueType = types.envVars;
+      description = ''
+        Process environment variables keyed by variable name, compared against
+        each variable's value (`process.env.<NAME>`); write
+        `{ regexp = "..."; }` as a variable's value for an anchored regular
+        expression. Several variables must all match.
+      '';
+      example = {
+        LD_PRELOAD = "/tmp/evil.so";
+      };
+    };
+
     iface = {
       type = "simple";
       operand = "iface.out";
@@ -431,13 +449,19 @@ let
   };
 
   # Effective operand of a condition key; lists values in `{ regexp = ...; }`
-  # form render to their own operand.
+  # form render to their own operand, and environment conditions render one
+  # operand per variable.
   operandOf =
     key: value:
     let
       spec = conditionMap.${key};
     in
-    if spec.type == "lists" && builtins.isAttrs value then spec.regexpOperand else spec.operand;
+    if spec.type == "lists" && builtins.isAttrs value then
+      spec.regexpOperand
+    else if spec.type == "env" then
+      envOperandPrefix
+    else
+      spec.operand;
 
   # First operand claimed by two fragment keys (aliases included), or null.
   # Array fields count as their condition key.
@@ -607,21 +631,44 @@ let
         data = if isRegexp then "^(?:${builtins.toString value})$" else builtins.toString value;
       };
 
+  # Operators contributed by one condition key. Only `processEnv` emits more
+  # than one: an operator per environment variable, ordered by variable name.
+  mkChildren =
+    frag: key:
+    let
+      raw = frag.${key};
+    in
+    if conditionMap.${key}.type == "env" then
+      map (
+        var:
+        let
+          varRaw = raw.${var};
+          isVarRegexp = builtins.isAttrs varRaw;
+          varValue = if isVarRegexp then varRaw.regexp else varRaw;
+        in
+        {
+          type = if isVarRegexp then "regexp" else "simple";
+          operand = envOperandPrefix + var;
+          data = if isVarRegexp then "^(?:${varValue})$" else builtins.toString varValue;
+        }
+      ) (lib.attrNames raw)
+    else
+      [ (mkChild frag key) ];
+
   # Build the operator for a rule fragment.
   #
-  # A fragment with a single condition yields that condition's operator
-  # directly. A fragment with several conditions yields a list operator
+  # A fragment yielding a single condition yields that condition's operator
+  # directly. A fragment yielding several conditions yields a list operator
   # (type = "list", operand = "list") whose children are combined with AND
   # (OpenSnitch's list type is inherently an AND of all its children).
   mkOperator =
     frag:
     let
-      names = builtins.attrNames frag;
-      children = map (mkChild frag) names;
+      children = lib.concatMap (mkChildren frag) (builtins.attrNames frag);
     in
-    if builtins.length names == 0 then
+    if children == [ ] then
       builtins.throw "opensnix: a rule must contain at least one condition, got an empty fragment."
-    else if builtins.length names == 1 then
+    else if builtins.length children == 1 then
       builtins.head children
     else
       {
@@ -872,12 +919,17 @@ let
             in
             ((spec.type or "") == "lists" && ((v == [ ]) || (builtins.isAttrs v && (v.regexp or null) == [ ])))
             || (spec ? listToRegexp && v == [ ]);
+          isEmptyEnv = k: v: ((conditionMap.${k} or { }).type or "") == "env" && v == { };
           listFields = lib.filterAttrs isEmptyList fragment;
           listFieldNames = builtins.attrNames listFields;
+          envFields = lib.filterAttrs isEmptyEnv fragment;
+          envFieldNames = builtins.attrNames envFields;
           collision = findOperandCollision fragment;
         in
         if builtins.length listFieldNames > 0 then
           builtins.throw "opensnix: rule '${name}' has empty list for '${builtins.head listFieldNames}'."
+        else if envFieldNames != [ ] then
+          builtins.throw "opensnix: rule '${name}' has no environment variables for '${builtins.head envFieldNames}'."
         else if builtins.length arrayFieldNames > 1 then
           builtins.throw "opensnix: rule '${name}' specifies multiple array fields (${builtins.concatStringsSep ", " arrayFieldNames}); only one is allowed."
         else if collision != null then

@@ -28,6 +28,22 @@ let
         operand = "process.path";
       };
     };
+    opensnix-env-preload = {
+      action = "deny";
+      operator = {
+        type = "simple";
+        operand = "process.env.LD_PRELOAD";
+        data = "/tmp/evil.so";
+      };
+    };
+    opensnix-env-proxy = {
+      action = "reject";
+      operator = {
+        type = "regexp";
+        operand = "process.env.HTTPS_PROXY";
+        data = "^(?:http://proxy.*)$";
+      };
+    };
     opensnix-hello-wildcard = {
       operator = {
         type = "regexp";
@@ -140,6 +156,16 @@ nixpkgs.lib.nixos.runTest {
             port = 22;
           };
           reject-c2.reject.port = 6667;
+          env-preload.deny = {
+            processEnv = {
+              LD_PRELOAD = "/tmp/evil.so";
+            };
+          };
+          env-proxy.reject = {
+            processEnv = {
+              HTTPS_PROXY.regexp = "http://proxy.*";
+            };
+          };
         };
       };
     };

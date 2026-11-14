@@ -82,9 +82,10 @@ Every rule must contain at least one condition; an empty rule fragment
 
 Condition keys that match a pattern rather than a single literal value - `host`,
 `ip`, `dstIp`, `srcIp`, `port`, `dstPort`, `srcPort`, `processPath`,
-`processCommand`, and the `domains` / `hosts` lists - accept a
-`{ regexp = "..."; }` (or `{ regexp = [ ... ]; }` for domain lists) attribute
-set in place of a plain value:
+`processCommand`, each `processEnv` variable (see
+[Environment Variables](#environment-variables)), and the `domains` / `hosts`
+lists - accept a `{ regexp = "..."; }` (or `{ regexp = [ ... ]; }` for domain
+lists) attribute set in place of a plain value:
 
 ```nix
 opensnix.rules.telemetry.deny.host.regexp = ".*[.]telemetry[.]example[.]com";
@@ -210,3 +211,27 @@ in the same rule when needed.
 - **`proto`**: Validated case-insensitively at evaluation time against the
   protocol strings OpenSnitch produces: `tcp`, `tcp6`, `udp`, `udp6`,
   `udplite`, `udplite6`, `sctp`, `sctp6`, `icmp`, and `icmp6`.
+
+## Environment Variables
+
+`processEnv` matches environment variables of the process opening the
+connection. It takes an attribute set keyed by variable name:
+
+```nix
+opensnix.rules.vetted-proxy = {
+  deny.processEnv = {
+    HTTPS_PROXY = "http://proxy:3128";
+    LD_PRELOAD.regexp = "/tmp/.*";
+  };
+};
+```
+
+- Every entry must match: `processEnv` emits one `process.env.<NAME>`
+  condition per variable, combined with the rule's other conditions as
+  described in [Combining Multiple Conditions](#combining-multiple-conditions).
+- A variable's value is compared literally, or matched with
+  `{ regexp = "..."; }` (anchored like every other pattern).
+- Variable names must match `[A-Za-z_][A-Za-z0-9_]*`, and `processEnv = { };`
+  is an evaluation error.
+- A process that does not have the variable matches an empty value, so use a
+  pattern like `.+` to require it to be set.
