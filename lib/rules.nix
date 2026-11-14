@@ -15,18 +15,6 @@ let
 
   toWrapped = path: "${dirOf path}/.${baseNameOf path}-wrapped";
 
-  # String type that rejects leading '^' or trailing '$' anchors, since the
-  # wrapper adds '^(?:<pattern>)$' around the pattern. The group is essential: RE2
-  # binds alternation looser than anchors, so bare ^80|443$ parses as
-  # (^80)|(443$) and would match 8080 or 1443; ^(?:80|443)$ matches only
-  # 80 or 443.
-  regexpStrType =
-    lib.types.addCheck lib.types.str (v: !(lib.hasPrefix "^" v || lib.hasSuffix "$" v))
-    // {
-      description = "string without leading '^' or trailing '$'";
-      descriptionClass = "noun";
-    };
-
   listToRegexp = values: "(?:" + (lib.concatStringsSep "|" (map builtins.toString values)) + ")";
 
   domainsSpec = {
@@ -35,7 +23,7 @@ let
     valueType = lib.types.listOf lib.types.str;
     fileName = "domains.list";
     format = values: lib.concatStringsSep "\n" (map (d: "0.0.0.0 ${d}") values);
-    regexpElementType = regexpStrType;
+    regexpElementType = types.regexpStr;
     regexpOperand = "lists.domains_regexp";
     regexpFileName = "domains_regexp.list";
     regexpFormat = values: lib.concatStringsSep "\n" (map (d: "^(?:${d})$") values);
@@ -92,7 +80,7 @@ let
             '';
           };
           regexp = lib.mkOption {
-            type = lib.types.nullOr regexpStrType;
+            type = lib.types.nullOr types.regexpStr;
             default = null;
             example = "python3-[0-9.]+";
             description = ''
@@ -123,7 +111,7 @@ let
     host = {
       type = "simple";
       operand = "dest.host";
-      regexpType = regexpStrType;
+      regexpType = types.regexpStr;
       description = ''
         Destination hostname (`dest.host`), or `{ regexp = "..."; }` for an
         anchored regular expression.
@@ -135,7 +123,7 @@ let
       type = "simple";
       operand = "dest.port";
       valueType = lib.types.ints.u16;
-      regexpType = regexpStrType;
+      regexpType = types.regexpStr;
       description = ''
         Destination port number (`dest.port`), or `{ regexp = "..."; }` for an
         anchored regular expression.
@@ -146,7 +134,7 @@ let
       type = "simple";
       operand = "dest.port";
       valueType = lib.types.ints.u16;
-      regexpType = regexpStrType;
+      regexpType = types.regexpStr;
       aliasOf = "port";
       description = ''
         Destination port number (`dest.port`), or `{ regexp = "..."; }` for an
@@ -158,7 +146,7 @@ let
       type = "simple";
       operand = "source.port";
       valueType = lib.types.ints.u16;
-      regexpType = regexpStrType;
+      regexpType = types.regexpStr;
       description = ''
         Source port number (`source.port`), or `{ regexp = "..."; }` for an
         anchored regular expression.
@@ -240,7 +228,7 @@ let
     ip = {
       type = "simple";
       operand = "dest.ip";
-      regexpType = regexpStrType;
+      regexpType = types.regexpStr;
       description = ''
         Destination IP address (`dest.ip`), or `{ regexp = "..."; }` for an
         anchored regular expression.
@@ -250,7 +238,7 @@ let
     dstIp = {
       type = "simple";
       operand = "dest.ip";
-      regexpType = regexpStrType;
+      regexpType = types.regexpStr;
       aliasOf = "ip";
       description = ''
         Destination IP address (`dest.ip`), or `{ regexp = "..."; }` for an
@@ -261,7 +249,7 @@ let
     srcIp = {
       type = "simple";
       operand = "source.ip";
-      regexpType = regexpStrType;
+      regexpType = types.regexpStr;
       description = ''
         Source IP address (`source.ip`), or `{ regexp = "..."; }` for an
         anchored regular expression.
@@ -302,7 +290,7 @@ let
     processPath = {
       type = "simple";
       operand = "process.path";
-      regexpType = regexpStrType;
+      regexpType = types.regexpStr;
       description = ''
         Executable path of the process (`process.path`), or
         `{ regexp = "..."; }` for an anchored regular expression. Cannot be
@@ -313,7 +301,7 @@ let
     processCommand = {
       type = "simple";
       operand = "process.command";
-      regexpType = regexpStrType;
+      regexpType = types.regexpStr;
       description = ''
         Full command line of the process (`process.command`), or
         `{ regexp = "..."; }` for an anchored regular expression.
@@ -381,22 +369,6 @@ let
     };
   };
 
-  regexpSubmoduleType =
-    innerType:
-    (lib.types.submodule {
-      options = {
-        regexp = lib.mkOption {
-          type = innerType;
-          description = ".regexp value must be a string";
-        };
-      };
-    })
-    // {
-      description = "{ regexp = ${innerType.description}; }";
-      descriptionClass = "noun";
-      getSubOptions = _: { };
-    };
-
   # Typed option attrs for a single rule fragment, derived from `conditionMap`
   # so the set of condition keys and their Nix value types live in exactly one
   # place. A spec without `valueType` defaults to a string; numeric conditions
@@ -409,10 +381,10 @@ let
       baseType = spec.valueType or lib.types.str;
       optionType =
         if spec ? regexpType then
-          lib.types.nullOr (lib.types.either baseType (regexpSubmoduleType spec.regexpType))
+          lib.types.nullOr (lib.types.either baseType (types.regexpSubmodule spec.regexpType))
         else if spec ? regexpElementType then
           lib.types.nullOr (
-            lib.types.either baseType (regexpSubmoduleType (lib.types.listOf spec.regexpElementType))
+            lib.types.either baseType (types.regexpSubmodule (lib.types.listOf spec.regexpElementType))
           )
         else
           lib.types.nullOr baseType;

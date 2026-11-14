@@ -36,4 +36,32 @@ in
       description = "protocol, one of: ${lib.concatStringsSep ", " allowed}";
       descriptionClass = "noun";
     };
+
+  # String type that rejects leading '^' or trailing '$' anchors, since regexp
+  # conditions wrap the pattern in '^(?:<pattern>)$'. The group is essential: RE2
+  # binds alternation looser than anchors, so bare ^80|443$ parses as
+  # (^80)|(443$) and would match 8080 or 1443; ^(?:80|443)$ matches only
+  # 80 or 443.
+  regexpStr =
+    (lib.types.addCheck lib.types.str (v: !(lib.hasPrefix "^" v || lib.hasSuffix "$" v)))
+    // {
+      description = "string without leading '^' or trailing '$'";
+      descriptionClass = "noun";
+    };
+
+  regexpSubmodule =
+    innerType:
+    (lib.types.submodule {
+      options = {
+        regexp = lib.mkOption {
+          type = innerType;
+          description = ".regexp value must be a string";
+        };
+      };
+    })
+    // {
+      description = "{ regexp = ${innerType.description}; }";
+      descriptionClass = "noun";
+      getSubOptions = _: { };
+    };
 }
