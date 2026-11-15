@@ -75,11 +75,13 @@
                 nativeBuildInputs = [
                   pkgs.statix
                   pkgs.deadnix
+                  pkgs.editorconfig-checker
                 ];
               }
               ''
                 statix check ${./.}
                 deadnix --fail ${./.}
+                editorconfig-checker ${./.}
                 touch $out
               '';
 
