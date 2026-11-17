@@ -11,7 +11,15 @@ let
 
   # Store path without its '/nix/store/<hash>-' prefix: the directory name a
   # package's files are reported under, which can differ from `.name`.
-  storeDirName = path: builtins.head (builtins.match "/nix/store/${storeHashClass}-(.*)" path);
+  storeDirName =
+    path:
+    let
+      matched = builtins.match "/nix/store/${storeHashClass}-(.+)" path;
+    in
+    if matched == null then
+      builtins.throw "opensnix: '${path}' is not a valid /nix/store/<hash>-<name> store path."
+    else
+      builtins.head matched;
 
   toWrapped = path: "${dirOf path}/.${baseNameOf path}-wrapped";
 

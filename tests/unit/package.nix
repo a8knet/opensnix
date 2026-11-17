@@ -467,4 +467,17 @@ in
     };
     expectedError.msg = "defaultPackageScope";
   };
+
+  wildcardInvalidStorePathError = {
+    expr = {
+      foo.package = {
+        value = mkMockPkg {
+          pname = "bad";
+          outPath = "/nix/store/not-a-valid-hash-bad-1.0";
+        };
+        scope = "wildcard";
+      };
+    };
+    expectedError.msg = "is not a valid /nix/store/<hash>-<name> store path";
+  };
 }
