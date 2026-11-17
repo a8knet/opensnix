@@ -224,6 +224,30 @@ in
     expectedError.msg = "must specify 'path'";
   };
 
+  valuePathWithoutLeadingSlashError = {
+    expr = {
+      foo = {
+        package = {
+          value = curl;
+          path = "bin/curl";
+        };
+      };
+    };
+    expectedError.msg = "package 'path' must start with '/'";
+  };
+
+  regexpPathWithoutLeadingSlashError = {
+    expr = {
+      foo = {
+        package = {
+          regexp = "curl-[0-9]+";
+          path = "bin/curl";
+        };
+      };
+    };
+    expectedError.msg = "package 'path' must start with '/'";
+  };
+
   emptyPackage = {
     expr = {
       foo = {

@@ -79,8 +79,8 @@ let
             default = null;
             example = "/bin/curl";
             description = ''
-              Explicit path within package (requires `value` or `regexp`,
-              incompatible with `wrapped`).
+              Explicit path within package starting with `/` (requires `value`
+              or `regexp`, incompatible with `wrapped`).
             '';
           };
           regexp = lib.mkOption {
@@ -769,7 +769,9 @@ let
 
   resolvePackageExact =
     name: frag: pkg:
-    if pkg ? regexp && pkg.regexp != null then
+    if pkg.path or null != null && !lib.hasPrefix "/" pkg.path then
+      builtins.throw "opensnix: rule '${name}' package 'path' must start with '/'."
+    else if pkg ? regexp && pkg.regexp != null then
       resolvePackageRegexp name frag pkg
     else
       resolvePackageValueOrWrapped name frag pkg;
