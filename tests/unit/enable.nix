@@ -50,4 +50,16 @@
     ];
     expected = { };
   };
+
+  inertWhenOpensnixDisabled = {
+    enable = false;
+    opensnitchServiceEnable = false;
+    expr = {
+      foo.allow = {
+        port = 123;
+      };
+    };
+    expectedWarnings = [ ];
+    expected = { };
+  };
 }

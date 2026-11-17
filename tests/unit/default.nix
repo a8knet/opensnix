@@ -74,8 +74,9 @@ let
                 };
                 services.opensnitch.enable = t.opensnitchServiceEnable or true;
                 opensnix = {
-                  enable = lib.mkForce true;
+                  enable = t.enable or true;
                   defaultAction = t.defaultAction or "allow";
+                  defaultPackageScope = t.defaultPackageScope or "exact";
                   rules = t.expr;
                 }
                 // lib.optionalAttrs (!useDefaultTimestamp) {

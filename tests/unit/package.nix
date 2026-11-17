@@ -420,4 +420,51 @@ in
     };
     expectedError.msg = "wildcard scope cannot specify 'wrapped'";
   };
+
+  defaultPackageScopeWildcard = {
+    defaultPackageScope = "wildcard";
+    expr = {
+      foo.package = firefox;
+    };
+    expected = {
+      opensnix-foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "regexp";
+          operand = "process.path";
+          data = "^(?:/nix/store/[0-9abcdfghijklmnpqrsvwxyz]{32}-(?:firefox-1\\.0)/.*)$";
+        };
+      };
+    };
+  };
+
+  defaultPackageScopeOverriddenByExact = {
+    defaultPackageScope = "wildcard";
+    expr = {
+      foo.package = {
+        value = firefox;
+        scope = "exact";
+      };
+    };
+    expected = {
+      opensnix-foo = {
+        name = "opensnix-foo";
+        action = "allow";
+        operator = {
+          type = "simple";
+          operand = "process.path";
+          data = "/nix/store/vk5drhp6vl299ivwrwh2xzj6243g17zz-firefox-1.0/bin/firefox";
+        };
+      };
+    };
+  };
+
+  badDefaultPackageScopeEnum = {
+    defaultPackageScope = "prefix";
+    expr = {
+      foo.package = firefox;
+    };
+    expectedError.msg = "defaultPackageScope";
+  };
 }
