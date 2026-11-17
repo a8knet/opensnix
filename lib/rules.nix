@@ -746,17 +746,14 @@ let
       hasPath = pkg.path or null != null;
       hasWrapped = (pkg.wrapped or false) == true;
       hasRegexp = pkg ? regexp && pkg.regexp != null;
-      hasValue = pkg ? value && pkg.value != null;
       pattern =
         if hasRegexp then
           pkg.regexp
-        else if hasValue then
+        else
           # The bin output's store directory is where executables run from, and
           # it can differ from `.name` (multi-output: 'curl-8.23.0-bin'). A
           # trailing '-wrapped' is dropped: the real binaries live unwrapped.
-          lib.escapeRegex (lib.removeSuffix "-wrapped" (storeDirName (lib.getBin pkg.value).outPath))
-        else
-          builtins.throw "opensnix: rule '${name}' package must specify either 'value' or 'regexp'.";
+          lib.escapeRegex (lib.removeSuffix "-wrapped" (storeDirName (lib.getBin pkg.value).outPath));
     in
     if hasPath then
       builtins.throw "opensnix: rule '${name}' with wildcard scope cannot specify 'path'."
@@ -772,16 +769,10 @@ let
 
   resolvePackageExact =
     name: frag: pkg:
-    let
-      hasRegexp = pkg ? regexp && pkg.regexp != null;
-      hasValue = pkg ? value && pkg.value != null;
-    in
-    if hasRegexp then
+    if pkg ? regexp && pkg.regexp != null then
       resolvePackageRegexp name frag pkg
-    else if hasValue then
-      resolvePackageValueOrWrapped name frag pkg
     else
-      builtins.throw "opensnix: rule '${name}' package must specify either 'value' or 'regexp'.";
+      resolvePackageValueOrWrapped name frag pkg;
 
   resolvePackage =
     name: frag: defaultScope:
@@ -795,9 +786,15 @@ let
         pkg = frag.package;
         scope = if pkg.scope or null != null then pkg.scope else defaultScope;
         hasProcessPath = frag ? processPath && frag.processPath != null;
+        hasRegexp = pkg ? regexp && pkg.regexp != null;
+        hasValue = pkg ? value && pkg.value != null;
       in
       if hasProcessPath then
         builtins.throw "opensnix: rule '${name}' cannot specify both 'package' and 'processPath'."
+      else if hasValue && hasRegexp then
+        builtins.throw "opensnix: rule '${name}' package cannot specify both 'value' and 'regexp'."
+      else if !hasValue && !hasRegexp then
+        builtins.throw "opensnix: rule '${name}' package must specify either 'value' or 'regexp'."
       else if scope == "wildcard" then
         resolvePackageWildcard name frag pkg
       else
@@ -846,21 +843,21 @@ let
             ]
           );
           wrapper = lib.head wrappers;
+          fragment =
+            if wrappers == [ ] then bareFragment else lib.filterAttrs (_: v: v != null) entry.${wrapper};
+          pkg = fragment.package or null;
+          hasBothPackageTargets = pkg != null && (pkg.value or null) != null && (pkg.regexp or null) != null;
         in
         if lib.length wrappers > 1 then
           builtins.throw "opensnix: a rule cannot specify more than one of 'allow', 'deny', 'reject'."
-        else if wrappers == [ ] then
-          {
-            fragment = bareFragment;
-            action = null;
-            inherit (entry) precedence;
-          }
-        else if bareFragment != { } then
+        else if wrappers != [ ] && bareFragment != { } then
           builtins.throw "opensnix: rule '${name}' cannot specify both '${wrapper}' and top-level conditions."
+        else if hasBothPackageTargets then
+          builtins.throw "opensnix: rule '${name}' package cannot specify both 'value' and 'regexp'."
         else
           {
-            fragment = lib.filterAttrs (_: v: v != null) entry.${wrapper};
-            action = wrapper;
+            inherit fragment;
+            action = if wrappers == [ ] then null else wrapper;
             inherit (entry) precedence;
           };
 
@@ -868,14 +865,20 @@ let
       # `package` is special-cased: unset submodule fields (`null`) are
       # dropped before merging so partial overrides such as group
       # `package.regexp` + child `package.path` combine, while explicitly
-      # set fields (including `wrapped = false`) override the group value.
+      # set fields (including `wrapped = false`, or switching between `value`
+      # and `regexp`) override the group value.
       mergeFragments =
         parent: child:
         let
           bothPackages = (parent.package or null != null) && (child.package or null != null);
           childPackage = lib.filterAttrs (_: v: v != null) child.package;
+          parentPackage = removeAttrs parent.package (
+            lib.optional (childPackage ? value) "regexp" ++ lib.optional (childPackage ? regexp) "value"
+          );
         in
-        lib.recursiveUpdate parent (if bothPackages then child // { package = childPackage; } else child);
+        lib.recursiveUpdate (if bothPackages then parent // { package = parentPackage; } else parent) (
+          if bothPackages then child // { package = childPackage; } else child
+        );
 
       # Neutral ancestor context for top-level entries.
       emptyInherited = {

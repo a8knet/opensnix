@@ -299,6 +299,49 @@ in
     };
   };
 
+  groupChildOverridesPackageRegexpWithValue = {
+    expr = {
+      foo = {
+        package.regexp = "foo-[0-9]+";
+        rules.bar.package = firefox;
+      };
+    };
+    expected = {
+      opensnix-foo-bar = {
+        name = "opensnix-foo-bar";
+        action = "allow";
+        operator = {
+          type = "simple";
+          operand = "process.path";
+          data = "/nix/store/vk5drhp6vl299ivwrwh2xzj6243g17zz-firefox-1.0/bin/firefox";
+        };
+      };
+    };
+  };
+
+  groupChildOverridesPackageValueWithRegexp = {
+    expr = {
+      foo = {
+        package = firefox;
+        rules.bar.package = {
+          regexp = "foo-[0-9]+";
+          path = "/bin/bar";
+        };
+      };
+    };
+    expected = {
+      opensnix-foo-bar = {
+        name = "opensnix-foo-bar";
+        action = "allow";
+        operator = {
+          type = "regexp";
+          operand = "process.path";
+          data = "^(?:/nix/store/[0-9abcdfghijklmnpqrsvwxyz]{32}-(?:foo-[0-9]+)/bin/bar)$";
+        };
+      };
+    };
+  };
+
   groupArrayField = {
     expr = {
       shared = {

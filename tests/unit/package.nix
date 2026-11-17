@@ -233,6 +233,32 @@ in
     expectedError.msg = "must specify either 'value' or 'regexp'";
   };
 
+  valueAndRegexpError = {
+    expr = {
+      foo = {
+        package = {
+          value = firefox;
+          regexp = "firefox-[0-9.]+";
+          path = "/bin/firefox";
+        };
+      };
+    };
+    expectedError.msg = "package cannot specify both 'value' and 'regexp'";
+  };
+
+  wildcardValueAndRegexpError = {
+    expr = {
+      foo = {
+        package = {
+          value = firefox;
+          regexp = "firefox-[0-9.]+";
+          scope = "wildcard";
+        };
+      };
+    };
+    expectedError.msg = "package cannot specify both 'value' and 'regexp'";
+  };
+
   wildcardScopeWithPackage = {
     expr = {
       foo = {
