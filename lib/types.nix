@@ -40,15 +40,24 @@ rec {
       descriptionClass = "noun";
     };
 
-  # String type that rejects leading '^' or trailing '$' anchors, since regexp
-  # conditions wrap the pattern in '^(?:<pattern>)$'. The group is essential: RE2
-  # binds alternation looser than anchors, so bare ^80|443$ parses as
-  # (^80)|(443$) and would match 8080 or 1443; ^(?:80|443)$ matches only
-  # 80 or 443.
+  # Element of a newline- or whitespace-delimited OpenSnitch list file
+  # ('domains.list', 'ips.list', 'nets.list').
+  listEntryStr = (lib.types.addCheck lib.types.str (v: builtins.match "[^[:space:]]+" v != null)) // {
+    description = "non-empty string without whitespace";
+    descriptionClass = "noun";
+  };
+
+  # String type that rejects empty patterns, embedded newlines, and leading '^'
+  # or trailing '$' anchors, since regexp conditions wrap the pattern in
+  # '^(?:<pattern>)$'. The group is essential: RE2 binds alternation looser than
+  # anchors, so bare ^80|443$ parses as (^80)|(443$) and would match 8080 or
+  # 1443; ^(?:80|443)$ matches only 80 or 443.
   regexpStr =
-    (lib.types.addCheck lib.types.str (v: !(lib.hasPrefix "^" v || lib.hasSuffix "$" v)))
+    (lib.types.addCheck lib.types.str (
+      v: v != "" && !(lib.hasPrefix "^" v || lib.hasSuffix "$" v || lib.hasInfix "\n" v)
+    ))
     // {
-      description = "string without leading '^' or trailing '$'";
+      description = "non-empty single-line string without leading '^' or trailing '$'";
       descriptionClass = "noun";
     };
 

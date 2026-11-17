@@ -32,7 +32,7 @@ let
   domainsSpec = {
     type = "lists";
     operand = "lists.domains";
-    valueType = lib.types.listOf lib.types.str;
+    valueType = lib.types.listOf types.listEntryStr;
     fileName = "domains.list";
     format = values: lib.concatStringsSep "\n" (map (d: "0.0.0.0 ${d}") values);
     regexpElementType = types.regexpStr;
@@ -360,7 +360,7 @@ let
     ips = {
       type = "lists";
       operand = "lists.ips";
-      valueType = lib.types.listOf lib.types.str;
+      valueType = lib.types.listOf types.listEntryStr;
       fileName = "ips.list";
       format = values: lib.concatStringsSep "\n" values;
       description = ''
@@ -376,7 +376,7 @@ let
     nets = {
       type = "lists";
       operand = "lists.nets";
-      valueType = lib.types.listOf lib.types.str;
+      valueType = lib.types.listOf types.listEntryStr;
       fileName = "nets.list";
       format = values: lib.concatStringsSep "\n" values;
       description = ''

@@ -167,6 +167,51 @@
     expectedError.msg = "trailing";
   };
 
+  domains-empty-element-error = {
+    expr = {
+      foo = {
+        domains = [ "" ];
+      };
+    };
+    expectedError.msg = "non-empty string without whitespace";
+  };
+
+  domains-whitespace-element-error = {
+    expr = {
+      foo = {
+        domains = [ "example.com other.com" ];
+      };
+    };
+    expectedError.msg = "non-empty string without whitespace";
+  };
+
+  ips-newline-element-error = {
+    expr = {
+      foo = {
+        ips = [ "1.1.1.1\n2.2.2.2" ];
+      };
+    };
+    expectedError.msg = "non-empty string without whitespace";
+  };
+
+  nets-empty-element-error = {
+    expr = {
+      foo = {
+        nets = [ "" ];
+      };
+    };
+    expectedError.msg = "non-empty string without whitespace";
+  };
+
+  domainsRegexp-newline-element-error = {
+    expr = {
+      foo = {
+        domains.regexp = [ "example[.]com\nother[.]com" ];
+      };
+    };
+    expectedError.msg = "non-empty single-line string";
+  };
+
   ips-content = {
     expr = {
       foo = {

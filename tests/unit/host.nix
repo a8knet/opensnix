@@ -63,4 +63,22 @@
     };
     expectedError.msg = "trailing";
   };
+
+  regexpEmptyError = {
+    expr = {
+      foo = {
+        host.regexp = "";
+      };
+    };
+    expectedError.msg = "non-empty single-line string";
+  };
+
+  regexpWithNewlineError = {
+    expr = {
+      foo = {
+        host.regexp = "example[.]com\nother[.]com";
+      };
+    };
+    expectedError.msg = "non-empty single-line string";
+  };
 }
