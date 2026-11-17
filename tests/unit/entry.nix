@@ -134,6 +134,16 @@
     expectedError.msg = "more than one";
   };
 
+  wrapperAndTopLevelCondition = {
+    expr = {
+      foo = {
+        userName = "alice";
+        deny.host = "evil.example";
+      };
+    };
+    expectedError.msg = "cannot specify both 'deny' and top-level conditions";
+  };
+
   unknownKey = {
     expr = {
       foo = {

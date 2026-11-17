@@ -26,8 +26,9 @@ group itself**, only for its leaf children (`opensnix-<group>-<child>`).
 
 Every child rule inside `rules` inherits its parent group's:
 
-- Top-level conditions (such as `userName`, `package`, `proto`, `iface`, etc.)
-- Action wrapper (`allow`, `deny`, or `reject`) and the conditions inside it
+- Conditions (such as `userName`, `package`, `proto`, `iface`, etc.), declared
+  either at the top level of the group or inside its action wrapper
+- Action wrapper (`allow`, `deny`, or `reject`), when set on the group
 - `precedence` flag (a child rule can undo a group's `precedence = true;` by
   setting `precedence = false;` explicitly)
 

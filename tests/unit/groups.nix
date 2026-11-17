@@ -363,6 +363,17 @@ in
     expectedError.msg = "empty 'rules' attrset";
   };
 
+  groupWrapperAndTopLevelConditionError = {
+    expr = {
+      g = {
+        userName = "alice";
+        deny.port = 53;
+        rules.dns.host = "example.com";
+      };
+    };
+    expectedError.msg = "cannot specify both 'deny' and top-level conditions";
+  };
+
   groupChildOverridesUserName = {
     expr = {
       g = {

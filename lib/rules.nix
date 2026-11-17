@@ -829,38 +829,40 @@ let
       # `action` is null when no explicit wrapper is present, so group children
       # can fall back to the group wrapper and only then to `defaultAction`.
       resolve =
-        entry:
+        name: entry:
         let
           wrappers = lib.filter (n: entry.${n} != null) [
             "allow"
             "deny"
             "reject"
           ];
-          wrapped =
-            if lib.length wrappers > 1 then
-              builtins.throw "opensnix: a rule cannot specify more than one of 'allow', 'deny', 'reject'."
-            else if wrappers == [ ] then
-              {
-                fragment = removeAttrs entry [
-                  "allow"
-                  "deny"
-                  "reject"
-                  "precedence"
-                  "rules"
-                ];
-                action = null;
-              }
-            else
-              {
-                fragment = entry.${lib.head wrappers};
-                action = lib.head wrappers;
-              };
+          bareFragment = lib.filterAttrs (_: v: v != null) (
+            removeAttrs entry [
+              "allow"
+              "deny"
+              "reject"
+              "precedence"
+              "rules"
+            ]
+          );
+          wrapper = lib.head wrappers;
         in
-        wrapped
-        // {
-          inherit (entry) precedence;
-          fragment = lib.filterAttrs (_: v: v != null) wrapped.fragment;
-        };
+        if lib.length wrappers > 1 then
+          builtins.throw "opensnix: a rule cannot specify more than one of 'allow', 'deny', 'reject'."
+        else if wrappers == [ ] then
+          {
+            fragment = bareFragment;
+            action = null;
+            inherit (entry) precedence;
+          }
+        else if bareFragment != { } then
+          builtins.throw "opensnix: rule '${name}' cannot specify both '${wrapper}' and top-level conditions."
+        else
+          {
+            fragment = lib.filterAttrs (_: v: v != null) entry.${wrapper};
+            action = wrapper;
+            inherit (entry) precedence;
+          };
 
       # Merge a group fragment with a child fragment; child values win.
       # `package` is special-cased: unset submodule fields (`null`) are
@@ -889,7 +891,7 @@ let
       expandEntry =
         inherited: name: entry:
         let
-          r = resolve entry;
+          r = resolve name entry;
           node = {
             inherit name;
             fragment = mergeFragments inherited.fragment r.fragment;
