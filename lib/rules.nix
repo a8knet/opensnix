@@ -22,7 +22,7 @@ let
 
   toWrapped = path: "${dirOf path}/.${baseNameOf path}-wrapped";
 
-  listToRegexp = values: "(?:" + (lib.concatStringsSep "|" (map builtins.toString values)) + ")";
+  listToRegexp = values: "(?:" + (builtins.concatStringsSep "|" (map builtins.toString values)) + ")";
 
   # OpenSnitch carries the environment variable name inside the operand
   # ('process.env.<NAME>'), so there is no single 'process.env' operand.
@@ -33,11 +33,11 @@ let
     operand = "lists.domains";
     valueType = lib.types.listOf types.listEntryStr;
     fileName = "domains.list";
-    format = values: lib.concatStringsSep "\n" (map (d: "0.0.0.0 ${d}") values);
+    format = values: builtins.concatStringsSep "\n" (map (d: "0.0.0.0 ${d}") values);
     regexpElementType = types.regexpStr;
     regexpOperand = "lists.domains_regexp";
     regexpFileName = "domains_regexp.list";
-    regexpFormat = values: lib.concatStringsSep "\n" (map (d: "^(?:${d})$") values);
+    regexpFormat = values: builtins.concatStringsSep "\n" (map (d: "^(?:${d})$") values);
     description = ''
       Destination domain list written as a hosts-formatted `domains.list`
       (`lists.domains` `lists` condition), or `{ regexp = [ ... ]; }` written as
@@ -361,7 +361,7 @@ let
       operand = "lists.ips";
       valueType = lib.types.listOf types.listEntryStr;
       fileName = "ips.list";
-      format = values: lib.concatStringsSep "\n" values;
+      format = values: builtins.concatStringsSep "\n" values;
       description = ''
         Destination IP address list written to `ips.list` (`lists.ips` `lists`
         condition).
@@ -377,7 +377,7 @@ let
       operand = "lists.nets";
       valueType = lib.types.listOf types.listEntryStr;
       fileName = "nets.list";
-      format = values: lib.concatStringsSep "\n" values;
+      format = values: builtins.concatStringsSep "\n" values;
       description = ''
         Destination CIDR network list written to `nets.list` (`lists.nets`
         `lists` condition).
@@ -658,7 +658,7 @@ let
           operand = envOperandPrefix + var;
           data = if isVarRegexp then "^(?:${varValue})$" else builtins.toString varValue;
         }
-      ) (lib.attrNames raw)
+      ) (builtins.attrNames raw)
     else
       [ (mkChild frag key) ];
 
@@ -837,7 +837,7 @@ let
       resolve =
         name: entry:
         let
-          wrappers = lib.filter (n: entry.${n} != null) [
+          wrappers = builtins.filter (n: entry.${n} != null) [
             "allow"
             "deny"
             "reject"
@@ -851,13 +851,13 @@ let
               "rules"
             ]
           );
-          wrapper = lib.head wrappers;
+          wrapper = builtins.head wrappers;
           fragment =
             if wrappers == [ ] then bareFragment else lib.filterAttrs (_: v: v != null) entry.${wrapper};
           pkg = fragment.package or null;
           hasBothPackageTargets = pkg != null && (pkg.value or null) != null && (pkg.regexp or null) != null;
         in
-        if lib.length wrappers > 1 then
+        if builtins.length wrappers > 1 then
           builtins.throw "opensnix: a rule cannot specify more than one of 'allow', 'deny', 'reject'."
         else if wrappers != [ ] && bareFragment != { } then
           builtins.throw "opensnix: rule '${name}' cannot specify both '${wrapper}' and top-level conditions."
@@ -991,14 +991,14 @@ let
       );
 
       dups = lib.filterAttrs (_: vs: builtins.length vs > 1) (lib.groupBy (e: e.name) expandedEntries);
-      invalidNames = lib.filter (n: !utils.isValidRuleName n) (map (e: e.name) expandedEntries);
+      invalidNames = builtins.filter (n: !utils.isValidRuleName n) (map (e: e.name) expandedEntries);
     in
     if !utils.isRfc3339UTC timestamp then
       builtins.throw "opensnix: timestamp '${timestamp}' is not a valid RFC3339 UTC date-time (expected YYYY-MM-DDTHH:MM:SSZ)."
     else if invalidNames != [ ] then
       builtins.throw "opensnix: invalid rule name '${builtins.head invalidNames}'; rule names must start with an alphanumeric character and may only contain [A-Za-z0-9._-]."
     else if dups != { } then
-      builtins.throw "opensnix: duplicate rule name '${builtins.head (lib.attrNames dups)}' generated; check for duplicate values in array fields or conflicting rule names."
+      builtins.throw "opensnix: duplicate rule name '${builtins.head (builtins.attrNames dups)}' generated; check for duplicate values in array fields or conflicting rule names."
     else
       builtins.listToAttrs (
         map (
