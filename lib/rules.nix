@@ -394,6 +394,8 @@ let
     };
   };
 
+  conditionKeys = builtins.attrNames conditionMap;
+
   # Typed option attrs for a single rule fragment, derived from `conditionMap`
   # so the set of condition keys and their Nix value types live in exactly one
   # place. A spec without `valueType` defaults to a string; numeric conditions
@@ -482,7 +484,7 @@ let
         map (k: {
           label = k;
           operand = operandOf k fragment.${k};
-        }) (lib.intersectLists (builtins.attrNames fragment) (builtins.attrNames conditionMap))
+        }) (lib.intersectLists (builtins.attrNames fragment) conditionKeys)
         ++ map (k: {
           label = k;
           operand = operandOf arrayExpansionMap.${k}.conditionKey [ ];
