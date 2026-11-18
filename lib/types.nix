@@ -66,7 +66,7 @@ rec {
       options = {
         regexp = lib.mkOption {
           type = innerType;
-          description = ".regexp value must be a string";
+          description = "Regular expression pattern(s) to match.";
         };
       };
     })
