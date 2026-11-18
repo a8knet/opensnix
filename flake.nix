@@ -17,7 +17,6 @@
         default = import ./lib;
         tests = import ./tests/unit {
           inherit (nixpkgs) lib;
-          rules = import ./lib/rules.nix;
         };
       };
 

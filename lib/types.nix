@@ -1,7 +1,5 @@
-{ lib }:
+{ lib, utils }:
 let
-  utils = import ./utils.nix;
-
   # POSIX shell-safe environment variable name.
   envNameClass = "[A-Za-z_][A-Za-z0-9_]*";
 in

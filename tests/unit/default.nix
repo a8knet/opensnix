@@ -1,7 +1,4 @@
-{
-  rules,
-  lib,
-}:
+{ lib }:
 let
   mockWriteTextDir = name: content: { inherit name content; };
 
@@ -10,15 +7,10 @@ let
     realpath = x: x;
   };
 
-  opensnixLib =
-    (rules {
-      inherit lib;
-      pkgsUtils = mockPkgsUtils;
-    })
-    // {
-      types = import ../../lib/types.nix { inherit lib; };
-      utils = import ../../lib/utils.nix;
-    };
+  opensnixLib = import ../../lib {
+    inherit lib;
+    pkgsUtils = mockPkgsUtils;
+  };
 
   ts = "2026-09-22T00:00:00Z";
 

@@ -1,11 +1,10 @@
 {
   lib,
   pkgsUtils,
+  types,
+  utils,
 }:
 let
-  utils = import ./utils.nix;
-  types = import ./types.nix { inherit lib; };
-
   # Nix base32 (nix32) hash alphabet: 0-9a-z without e, o, t, u.
   storeHashClass = "[0-9abcdfghijklmnpqrsvwxyz]{32}";
 
