@@ -527,6 +527,7 @@ let
   };
 
   conditionsTypeWithArrays = lib.types.submodule {
+    _file = ./rules.nix;
     options = conditionsOptions // arrayOptions // { package = packageOption; };
   };
 

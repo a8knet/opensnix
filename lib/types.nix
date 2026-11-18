@@ -62,6 +62,7 @@ rec {
   regexpSubmodule =
     innerType:
     (lib.types.submodule {
+      _file = ./types.nix;
       options = {
         regexp = lib.mkOption {
           type = innerType;
