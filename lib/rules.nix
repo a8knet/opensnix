@@ -752,7 +752,7 @@ let
     let
       hasPath = pkg.path or null != null;
       hasWrapped = (pkg.wrapped or false) == true;
-      hasRegexp = pkg ? regexp && pkg.regexp != null;
+      hasRegexp = pkg.regexp or null != null;
       pattern =
         if hasRegexp then
           pkg.regexp
@@ -778,7 +778,7 @@ let
     name: frag: pkg:
     if pkg.path or null != null && !lib.hasPrefix "/" pkg.path then
       builtins.throw "opensnix: rule '${name}' package 'path' must start with '/'."
-    else if pkg ? regexp && pkg.regexp != null then
+    else if pkg.regexp or null != null then
       resolvePackageRegexp name frag pkg
     else
       resolvePackageValueOrWrapped name frag pkg;
@@ -786,7 +786,7 @@ let
   resolvePackage =
     name: frag: defaultScope:
     let
-      hasPackage = frag ? package && frag.package != null;
+      hasPackage = frag.package or null != null;
     in
     if !hasPackage then
       frag
@@ -794,9 +794,9 @@ let
       let
         pkg = frag.package;
         scope = if pkg.scope or null != null then pkg.scope else defaultScope;
-        hasProcessPath = frag ? processPath && frag.processPath != null;
-        hasRegexp = pkg ? regexp && pkg.regexp != null;
-        hasValue = pkg ? value && pkg.value != null;
+        hasProcessPath = frag.processPath or null != null;
+        hasRegexp = pkg.regexp or null != null;
+        hasValue = pkg.value or null != null;
       in
       if hasProcessPath then
         builtins.throw "opensnix: rule '${name}' cannot specify both 'package' and 'processPath'."
