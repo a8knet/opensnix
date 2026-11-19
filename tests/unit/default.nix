@@ -36,27 +36,10 @@ let
           (
             { lib, ... }:
             {
-              imports = [ ../../modules ];
-              options = {
-                warnings = lib.mkOption {
-                  type = lib.types.listOf lib.types.str;
-                  internal = true;
-                  default = [ ];
-                  description = "Stub of the NixOS top-level warnings option.";
-                };
-                services.opensnitch = {
-                  enable = lib.mkOption {
-                    type = lib.types.bool;
-                    default = true;
-                    description = "Stub of the real OpenSnitch module's enable option.";
-                  };
-                  rules = lib.mkOption {
-                    type = lib.types.submodule { freeformType = lib.types.json; };
-                    default = { };
-                    description = "Stub of the real OpenSnitch module's rules option.";
-                  };
-                };
-              };
+              imports = [
+                ../../modules
+                ../../modules/stubs.nix
+              ];
               config = {
                 _module.args.self = {
                   lib = {

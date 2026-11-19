@@ -9,28 +9,10 @@ let
   eval = lib.evalModules {
     modules = [
       ../modules/default.nix
+      ../modules/stubs.nix
       {
         config._module.args = {
           inherit pkgs self;
-        };
-        options = {
-          warnings = lib.mkOption {
-            type = lib.types.listOf lib.types.str;
-            default = [ ];
-            internal = true;
-          };
-          services.opensnitch = {
-            enable = lib.mkOption {
-              type = lib.types.bool;
-              default = false;
-              internal = true;
-            };
-            rules = lib.mkOption {
-              type = lib.types.attrs;
-              default = { };
-              internal = true;
-            };
-          };
         };
       }
     ];
