@@ -95,21 +95,20 @@ let
   renderOption =
     option:
     let
-      validated = validateOption option;
-      defaultRow = lib.optional (validated ? default) (
-        renderDetailsRow "Default" (renderValue validated.default)
+      defaultRow = lib.optional (option ? default) (
+        renderDetailsRow "Default" (renderValue option.default)
       );
-      exampleRow = lib.optional (validated ? example) (
-        renderDetailsRow "Example" (renderValue validated.example)
+      exampleRow = lib.optional (option ? example) (
+        renderDetailsRow "Example" (renderValue option.example)
       );
-      sourceRow = lib.optional (validated ? declarations) (
-        renderDetailsRow "Source" (lib.concatLines (map renderDeclaration validated.declarations))
+      sourceRow = lib.optional (option ? declarations) (
+        renderDetailsRow "Source" (lib.concatLines (map renderDeclaration option.declarations))
       );
     in
     ''
-      ### `${validated.name}`
+      ### `${option.name}`
 
-      ${validated.description}
+      ${option.description}
 
       ${lib.concatStrings (
         [
@@ -120,7 +119,7 @@ let
           "</colgroup>"
           "<tbody>"
         ]
-        ++ lib.optional (validated ? type) (renderDetailsRow "Type" validated.type)
+        ++ lib.optional (option ? type) (renderDetailsRow "Type" option.type)
         ++ defaultRow
         ++ exampleRow
         ++ sourceRow
