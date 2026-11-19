@@ -118,7 +118,7 @@ let
   # The `data` is filled in by mkOperator from the user-supplied value.
   # Conditions with `regexpType` support `{ regexp = "..."; }` syntax.
   # List conditions with `regexpElementType` support `{ regexp = [...]; }` syntax.
-  conditionMap = {
+  conditionMap = rec {
     host = {
       type = "simple";
       operand = "dest.host";
@@ -141,17 +141,8 @@ let
       '';
       example = 443;
     };
-    dstPort = {
-      type = "simple";
-      operand = "dest.port";
-      valueType = lib.types.ints.u16;
-      regexpType = types.regexpStr;
+    dstPort = port // {
       aliasOf = "port";
-      description = ''
-        Destination port number (`dest.port`), or `{ regexp = "..."; }` for an
-        anchored regular expression.
-      '';
-      example = 443;
     };
     srcPort = {
       type = "simple";
@@ -179,20 +170,8 @@ let
         443
       ];
     };
-    dstPorts = {
-      type = "regexp";
-      operand = "dest.port";
-      valueType = lib.types.listOf lib.types.ints.u16;
+    dstPorts = ports // {
       aliasOf = "ports";
-      inherit listToRegexp;
-      description = ''
-        List of destination port numbers combined into an anchored alternation
-        regexp (`dest.port`).
-      '';
-      example = [
-        80
-        443
-      ];
     };
     srcPorts = {
       type = "regexp";
@@ -217,14 +196,8 @@ let
       '';
       example = "systemd-resolve";
     };
-    user = {
-      type = "simple";
-      operand = "user.name";
+    user = userName // {
       aliasOf = "userName";
-      description = ''
-        Owner username of the process initiating the connection (`user.name`).
-      '';
-      example = "systemd-resolve";
     };
     userId = {
       type = "simple";
@@ -246,16 +219,8 @@ let
       '';
       example = "9.9.9.9";
     };
-    dstIp = {
-      type = "simple";
-      operand = "dest.ip";
-      regexpType = types.regexpStr;
+    dstIp = ip // {
       aliasOf = "ip";
-      description = ''
-        Destination IP address (`dest.ip`), or `{ regexp = "..."; }` for an
-        anchored regular expression.
-      '';
-      example = "9.9.9.9";
     };
     srcIp = {
       type = "simple";
@@ -277,15 +242,8 @@ let
       '';
       example = "10.0.0.0/8";
     };
-    dstNetwork = {
-      type = "network";
-      operand = "dest.network";
+    dstNetwork = network // {
       aliasOf = "network";
-      description = ''
-        Destination CIDR subnet or OpenSnitch network alias such as `"LAN"` or
-        `"MULTICAST"` (`dest.network` `network` condition).
-      '';
-      example = "10.0.0.0/8";
     };
 
     proto = {
@@ -348,12 +306,8 @@ let
       description = "Inbound network interface name (`iface.in`).";
       example = "eth0";
     };
-    ifaceOut = {
-      type = "simple";
-      operand = "iface.out";
+    ifaceOut = iface // {
       aliasOf = "iface";
-      description = "Outbound network interface name (`iface.out`).";
-      example = "wlan0";
     };
 
     ips = {
