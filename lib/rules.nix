@@ -482,9 +482,18 @@ let
     '';
   };
 
+  # Option attrs shared by a rule fragment submodule and a top-level rule
+  # entry: every condition key, the array expansion fields, and `package`.
+  fragmentOptions =
+    conditionsOptions
+    // arrayOptions
+    // {
+      package = packageOption;
+    };
+
   conditionsTypeWithArrays = lib.types.submodule {
     _file = ./rules.nix;
-    options = conditionsOptions // arrayOptions // { package = packageOption; };
+    options = fragmentOptions;
   };
 
   precedenceOption = lib.mkOption {
@@ -524,11 +533,7 @@ let
     };
     precedence = precedenceOption;
   }
-  // conditionsOptions
-  // arrayOptions
-  // {
-    package = packageOption;
-  };
+  // fragmentOptions;
 
   # Typed schema for a top-level `opensnix.rules` entry: either a leaf rule
   # (bare fragment, or wrapped in `allow` / `deny` / `reject`), or a group carrying
